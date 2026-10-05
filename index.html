@@ -392,6 +392,7 @@
             doc, 
             updateDoc, 
             deleteDoc, 
+            setDoc,
             onSnapshot 
         } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
@@ -451,7 +452,22 @@
         }
 
         // الاستماع اللحظي للسحابة
-        onSnapshot(recordsCol, (snapshot) => {
+        onSnapshot(recordsCol, async (snapshot) => {
+            // لا تمسح نسخة Chrome إذا كانت السحابة فارغة؛ ارفعها أولاً إلى Firestore.
+            if (snapshot.empty && records.length > 0) {
+                const localRecords = [...records];
+                try {
+                    await Promise.all(localRecords.map((record, index) => {
+                        const recordId = String(record.id || `local_${Date.now()}_${index}`);
+                        return setDoc(doc(recordsCol, recordId), { ...record, id: recordId });
+                    }));
+                } catch (error) {
+                    console.warn('تعذر رفع النسخة المحلية إلى Firestore:', error);
+                    saveLocalBackup();
+                }
+                return;
+            }
+
             records = [];
             snapshot.forEach((docSnap) => {
                 records.push({ id: docSnap.id, ...docSnap.data() });
