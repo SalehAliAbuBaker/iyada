@@ -51,7 +51,7 @@
                 </div>
                 <div>
                     <h1 class="text-2xl font-extrabold tracking-wide">سجل الواردين إلى العيادة</h1>
-                    <p class="text-teal-200 text-xs">نظام التسجيل الطبي وإصدار التقارير الإحصائية (سحابي متصل)</p>
+                    <p class="text-teal-200 text-xs">نظام التسجيل الطبي السحابي (متصل ومباشر)</p>
                 </div>
             </div>
 
@@ -77,7 +77,7 @@
         <!-- إشعار الحفظ -->
         <div id="toast" class="fixed bottom-5 left-5 bg-emerald-700 text-white px-6 py-3 rounded-xl shadow-2xl transform translate-y-24 opacity-0 transition-all duration-300 z-50 font-bold flex items-center gap-2">
             <span>✅</span>
-            <span id="toastMsg">تم حفظ البيانات بنجاح</span>
+            <span id="toastMsg">تم الحفظ بنجاح</span>
         </div>
 
         <!-- ==================== 1. شاشة إدخال البيانات ==================== -->
@@ -367,7 +367,7 @@
             <!-- قسم النسخ الاحتياطي للبيانات -->
             <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
                 <h3 class="text-base font-bold text-slate-800 mb-2">⚙️ إدارة قاعدة البيانات والنسخ الاحتياطي</h3>
-                <p class="text-xs text-slate-500 mb-4">البيانات متصلة بقاعدة Firebase السحابية، ويمكنك استخراج نسخة محلية أو تنزيلها بأي وقت.</p>
+                <p class="text-xs text-slate-500 mb-4">البيانات متصلة سحابياً ومحفوظة بشكل دائم على خوادم Firebase.</p>
                 <div class="flex flex-wrap gap-3">
                     <button onclick="downloadBackup()" class="bg-slate-700 hover:bg-slate-800 text-white text-sm font-bold px-4 py-2.5 rounded-xl transition">
                         ⬇️ تحميل نسخة احتياطية (JSON)
@@ -379,7 +379,7 @@
 
     </main>
 
-    <!-- كود المنظومة والربط السحابي مع Firebase Firestore -->
+    <!-- الربط السحابي المتكامل مع Firebase Firestore -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
         import { 
@@ -406,7 +406,6 @@
         const db = getFirestore(app);
         const recordsCol = collection(db, "records");
 
-        // القوائم
         const MALE_CATEGORIES = [
             "طالب بدار المصطفى",
             "طالب بالمدرسة",
@@ -430,7 +429,7 @@
         const ALL_CATEGORIES = [...MALE_CATEGORIES, ...FEMALE_CATEGORIES];
         let records = [];
 
-        // الاستماع الحي والتحديث الفوري من سحابة Firestore
+        // الاستماع المباشر والمتزامن لقاعدة البيانات
         onSnapshot(recordsCol, (snapshot) => {
             records = [];
             snapshot.forEach((docSnap) => {
@@ -438,15 +437,15 @@
             });
             updateBadge();
             updateSerialNumber();
-            renderRecordsTable();
-            updateMonthlyPreview();
-            updateStaffReportPreview();
+            window.renderRecordsTable();
+            window.updateMonthlyPreview();
+            window.updateStaffReportPreview();
         }, (error) => {
-            console.error("خطأ في الاتصال بقاعدة البيانات:", error);
-            showToast("خطأ في الاتصال بقاعدة البيانات");
+            console.error("خطأ مزامنة السحابة:", error);
+            showToast("تنبيه: تعذر مزامنة السحابة");
         });
 
-        // دوال المزامنة والعمليات
+        // حفظ أو تعديل السجل
         window.handleSaveRecord = async function(e) {
             e.preventDefault();
 
@@ -454,11 +453,11 @@
             saveBtn.disabled = true;
             saveBtn.classList.add('opacity-50');
 
-            const editId = document.getElementById('editId').value;
+            const editId = document.getElementById('editId').value.trim();
             const gender = document.querySelector('input[name="gender"]:checked').value;
 
             const recordData = {
-                serial: Number(document.getElementById('serialNumber').value),
+                serial: Number(document.getElementById('serialNumber').value) || 1,
                 date: document.getElementById('visitDate').value,
                 period: document.getElementById('shiftPeriod').value,
                 staff: document.getElementById('staffName').value,
@@ -481,26 +480,27 @@
                     const docRef = doc(db, "records", editId);
                     await updateDoc(docRef, recordData);
                     showToast('تم تحديث البيانات في السحابة بنجاح');
-                    resetFormFull();
+                    window.resetFormFull();
                 } else {
                     await addDoc(recordsCol, recordData);
-                    showToast('تم حفظ الحالة في السحابة بنجاح');
-                    clearPatientFieldsOnly();
+                    showToast('تم حفظ الحالة بنجاح في السحابة');
+                    window.clearPatientFieldsOnly();
                 }
             } catch (err) {
-                console.error("خطأ أثناء الحفظ:", err);
+                console.error("خطأ الحفظ:", err);
                 alert("حدث خطأ أثناء الاتصال بقاعدة البيانات: " + err.message);
             } finally {
+                // إعادة تمكين الزر بشكل فوري ومؤكد
                 saveBtn.disabled = false;
                 saveBtn.classList.remove('opacity-50');
             }
         };
 
         window.deleteRecord = async function(id) {
-            if (confirm('هل أنت متأكد من حذف هذا السجل نهائياً من قاعدة البيانات السحابية؟')) {
+            if (confirm('هل أنت متأكد من حذف هذا السجل نهائياً؟')) {
                 try {
                     await deleteDoc(doc(db, "records", id));
-                    showToast('تم حذف السجل من السحابة بنجاح');
+                    showToast('تم الحذف بنجاح');
                 } catch (err) {
                     alert('خطأ أثناء الحذف: ' + err.message);
                 }
@@ -511,7 +511,7 @@
             const rec = records.find(r => r.id === id);
             if (!rec) return;
 
-            switchTab('formTab');
+            window.switchTab('formTab');
             document.getElementById('editId').value = rec.id;
             document.getElementById('serialNumber').value = rec.serial;
             document.getElementById('visitDate').value = rec.date;
@@ -521,7 +521,7 @@
 
             const genderRadio = document.querySelector(`input[name="gender"][value="${rec.gender}"]`);
             if (genderRadio) genderRadio.checked = true;
-            updateCategories(rec.category);
+            window.updateCategories(rec.category);
 
             document.getElementById('isExamined').checked = (rec.examined === 'معاينة');
             document.getElementById('pharmacyTreatment').value = rec.treatment || '';
@@ -532,7 +532,7 @@
             document.getElementById('transferReason').value = rec.transferReason || '';
             document.getElementById('notes').value = rec.notes || '';
 
-            document.getElementById('saveBtn').innerHTML = '<span>🔄 حفظ التعديلات في السحابة</span>';
+            document.getElementById('saveBtn').innerHTML = '<span>🔄 حفظ التعديل في السحابة</span>';
             document.getElementById('cancelEditBtn').classList.remove('hidden');
             window.scrollTo({ top: 0, behavior: 'smooth' });
         };
@@ -551,6 +551,7 @@
         }
 
         window.clearPatientFieldsOnly = function() {
+            document.getElementById('editId').value = '';
             document.getElementById('patientName').value = '';
             document.getElementById('isExamined').checked = true;
             document.getElementById('pharmacyTreatment').value = '';
@@ -560,15 +561,19 @@
             document.getElementById('transferTo').value = '';
             document.getElementById('transferReason').value = '';
             document.getElementById('notes').value = '';
+            
+            const saveBtn = document.getElementById('saveBtn');
+            saveBtn.disabled = false;
+            saveBtn.classList.remove('opacity-50');
+            saveBtn.innerHTML = '<span>💾 حفظ بيانات المريض في السجل السحابي</span>';
+            document.getElementById('cancelEditBtn').classList.add('hidden');
+            
+            updateSerialNumber();
             document.getElementById('patientName').focus();
         };
 
         window.resetFormFull = function() {
-            document.getElementById('editId').value = '';
-            document.getElementById('saveBtn').innerHTML = '<span>💾 حفظ بيانات المريض في السجل السحابي</span>';
-            document.getElementById('cancelEditBtn').classList.add('hidden');
-            clearPatientFieldsOnly();
-            updateSerialNumber();
+            window.clearPatientFieldsOnly();
         };
 
         window.updateCategories = function(selectedCategory = null) {
@@ -602,6 +607,7 @@
 
         window.renderRecordsTable = function() {
             const tbody = document.getElementById('recordsTableBody');
+            if (!tbody) return;
             const search = document.getElementById('searchInput').value.trim().toLowerCase();
             const filterDate = document.getElementById('filterDateInput').value;
 
@@ -653,6 +659,7 @@
         window.updateMonthlyPreview = function() {
             const monthVal = document.getElementById('reportMonth').value;
             const previewContainer = document.getElementById('categoryPreviewList');
+            if (!previewContainer) return;
             const monthRecords = records.filter(r => r.date && r.date.startsWith(monthVal));
 
             document.getElementById('monthTotalCount').innerText = `الإجمالي: ${monthRecords.length}`;
@@ -730,6 +737,7 @@
             const dateVal = document.getElementById('staffReportDate').value;
             const staffVal = document.getElementById('staffReportName').value;
             const container = document.getElementById('staffReportResult');
+            if (!container) return;
 
             const dayRecords = records.filter(r => r.date === dateVal && (staffVal === 'ALL' || r.staff === staffVal));
 
@@ -816,7 +824,8 @@
 
         window.switchTab = function(tabId) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-            document.getElementById(tabId).classList.remove('hidden');
+            const activeTab = document.getElementById(tabId);
+            if (activeTab) activeTab.classList.remove('hidden');
 
             document.querySelectorAll('.tab-btn').forEach(btn => {
                 btn.classList.remove('tab-active');
@@ -824,18 +833,21 @@
             });
 
             const activeBtn = document.getElementById('btn-' + tabId);
-            activeBtn.classList.add('tab-active');
-            activeBtn.classList.remove('text-teal-100');
+            if (activeBtn) {
+                activeBtn.classList.add('tab-active');
+                activeBtn.classList.remove('text-teal-100');
+            }
 
-            if (tabId === 'recordsTab') renderRecordsTable();
+            if (tabId === 'recordsTab') window.renderRecordsTable();
             if (tabId === 'reportsTab') {
-                updateMonthlyPreview();
-                updateStaffReportPreview();
+                window.updateMonthlyPreview();
+                window.updateStaffReportPreview();
             }
         };
 
         function showToast(msg) {
             const toast = document.getElementById('toast');
+            if (!toast) return;
             document.getElementById('toastMsg').innerText = msg;
             toast.classList.remove('translate-y-24', 'opacity-0');
             setTimeout(() => {
@@ -843,12 +855,12 @@
             }, 3000);
         }
 
-        // التهيئة
+        // ضبط التواريخ الافتراضية عند البدء
         const today = new Date().toISOString().split('T')[0];
         document.getElementById('visitDate').value = today;
         document.getElementById('reportMonth').value = today.slice(0, 7);
         document.getElementById('staffReportDate').value = today;
-        updateCategories();
+        window.updateCategories();
     </script>
 </body>
 </html>
