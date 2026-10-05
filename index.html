@@ -51,7 +51,10 @@
                 </div>
                 <div>
                     <h1 class="text-2xl font-extrabold tracking-wide">سجل الواردين إلى العيادة</h1>
-                    <p class="text-teal-200 text-xs">نظام التسجيل الطبي السحابي (متصل ومباشر)</p>
+                    <div class="flex items-center gap-2">
+                        <p class="text-teal-200 text-xs">نظام التسجيل الطبي السحابي</p>
+                        <span id="syncIndicator" class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-500 text-white">متصل بالسحابة 🟢</span>
+                    </div>
                 </div>
             </div>
 
@@ -77,12 +80,12 @@
         <!-- إشعار الحفظ -->
         <div id="toast" class="fixed bottom-5 left-5 bg-emerald-700 text-white px-6 py-3 rounded-xl shadow-2xl transform translate-y-24 opacity-0 transition-all duration-300 z-50 font-bold flex items-center gap-2">
             <span>✅</span>
-            <span id="toastMsg">تم الحفظ بنجاح</span>
+            <span id="toastMsg">تم حفظ البيانات بنجاح</span>
         </div>
 
         <!-- ==================== 1. شاشة إدخال البيانات ==================== -->
         <section id="formTab" class="tab-content">
-            <form id="clinicForm" onsubmit="window.handleSaveRecord(event)" class="space-y-6">
+            <form id="clinicForm" onsubmit="window.saveRecordHandler(event)" class="space-y-6">
                 <input type="hidden" id="editId" value="">
 
                 <!-- بطاقة بيانات النوبة والمناوب -->
@@ -203,7 +206,7 @@
                             <input type="date" id="admitFrom" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-teal-600">
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-slate-600 mb-1">🛏️ ترقيد إلى تاريخ</label>
+                            <label class="block text-xs font-bold text-slate-600 mb-1">🛏️️ ترقيد إلى تاريخ</label>
                             <input type="date" id="admitTo" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-teal-600">
                         </div>
                         <div>
@@ -224,8 +227,8 @@
 
                 <!-- أزرار الحفظ والإلغاء -->
                 <div class="flex items-center gap-3">
-                    <button type="submit" id="saveBtn" class="flex-1 bg-teal-700 hover:bg-teal-800 text-white font-bold py-3.5 px-6 rounded-xl shadow-md hover:shadow-lg transition flex justify-center items-center gap-2 text-lg">
-                        <span>💾 حفظ بيانات المريض في السجل السحابي</span>
+                    <button type="submit" id="saveBtn" class="flex-1 bg-teal-700 hover:bg-teal-800 text-white font-bold py-3.5 px-6 rounded-xl shadow-md hover:shadow-lg transition flex justify-center items-center gap-2 text-lg cursor-pointer">
+                        <span>💾 حفظ بيانات المريض في السجل</span>
                     </button>
                     <button type="button" id="cancelEditBtn" onclick="resetFormFull()" class="hidden bg-amber-600 hover:bg-amber-700 text-white font-bold py-3.5 px-6 rounded-xl shadow transition">
                         إلغاء التعديل
@@ -367,7 +370,7 @@
             <!-- قسم النسخ الاحتياطي للبيانات -->
             <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
                 <h3 class="text-base font-bold text-slate-800 mb-2">⚙️ إدارة قاعدة البيانات والنسخ الاحتياطي</h3>
-                <p class="text-xs text-slate-500 mb-4">البيانات متصلة سحابياً ومحفوظة بشكل دائم على خوادم Firebase.</p>
+                <p class="text-xs text-slate-500 mb-4">البيانات متصلة بقاعدة Firebase السحابية، ويمكنك استخراج نسخة احتياطية محلية لجهازك.</p>
                 <div class="flex flex-wrap gap-3">
                     <button onclick="downloadBackup()" class="bg-slate-700 hover:bg-slate-800 text-white text-sm font-bold px-4 py-2.5 rounded-xl transition">
                         ⬇️ تحميل نسخة احتياطية (JSON)
@@ -379,9 +382,9 @@
 
     </main>
 
-    <!-- الربط السحابي المتكامل مع Firebase Firestore -->
+    <!-- منظومة المعالجة مع دعم Firebase Firestore والنسخ المحلي المزدوج -->
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
         import { 
             getFirestore, 
             collection, 
@@ -390,7 +393,7 @@
             updateDoc, 
             deleteDoc, 
             onSnapshot 
-        } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
+        } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyC2qYG1-ipWBbYV9Ln689Ft68YNPA3TlTM",
@@ -401,6 +404,19 @@
             appId: "1:270230423238:web:27966553ee0e6c9a6639c7",
             measurementId: "G-T4NEH7DZN3"
         };
+
+        const STORAGE_KEY = 'clinic_patients_records_v1';
+        let records = [];
+
+        // استرجاع أولي من الذاكرة المحلية لتفادي تصفير الشاشة
+        try {
+            const localSaved = localStorage.getItem(STORAGE_KEY);
+            if (localSaved) {
+                records = JSON.parse(localSaved);
+            }
+        } catch(e) {
+            records = [];
+        }
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
@@ -427,37 +443,47 @@
         ];
 
         const ALL_CATEGORIES = [...MALE_CATEGORIES, ...FEMALE_CATEGORIES];
-        let records = [];
 
-        // الاستماع المباشر والمتزامن لقاعدة البيانات
+        function saveLocalBackup() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+            } catch(e) {}
+        }
+
+        // الاستماع اللحظي للسحابة
         onSnapshot(recordsCol, (snapshot) => {
             records = [];
             snapshot.forEach((docSnap) => {
                 records.push({ id: docSnap.id, ...docSnap.data() });
             });
+            saveLocalBackup();
             updateBadge();
             updateSerialNumber();
             window.renderRecordsTable();
             window.updateMonthlyPreview();
             window.updateStaffReportPreview();
+            
+            const syncEl = document.getElementById('syncIndicator');
+            if (syncEl) syncEl.innerText = "متصل بالسحابة 🟢";
         }, (error) => {
-            console.error("خطأ مزامنة السحابة:", error);
-            showToast("تنبيه: تعذر مزامنة السحابة");
+            console.error("Firestore sync error:", error);
+            const syncEl = document.getElementById('syncIndicator');
+            if (syncEl) syncEl.innerText = "وضع محلي (غير متصل) 🟠";
         });
 
-        // حفظ أو تعديل السجل
-        window.handleSaveRecord = async function(e) {
+        // دالة حفظ السجل المزدوج
+        window.saveRecordHandler = async function(e) {
             e.preventDefault();
 
             const saveBtn = document.getElementById('saveBtn');
             saveBtn.disabled = true;
-            saveBtn.classList.add('opacity-50');
+            saveBtn.innerHTML = '<span>⏳ جارٍ الحفظ...</span>';
 
             const editId = document.getElementById('editId').value.trim();
             const gender = document.querySelector('input[name="gender"]:checked').value;
 
             const recordData = {
-                serial: Number(document.getElementById('serialNumber').value) || 1,
+                serial: Number(document.getElementById('serialNumber').value) || (records.length + 1),
                 date: document.getElementById('visitDate').value,
                 period: document.getElementById('shiftPeriod').value,
                 staff: document.getElementById('staffName').value,
@@ -472,35 +498,51 @@
                 transferTo: document.getElementById('transferTo').value.trim(),
                 transferReason: document.getElementById('transferReason').value.trim(),
                 notes: document.getElementById('notes').value.trim(),
-                updatedAt: new Date().toISOString()
+                timestamp: Date.now()
             };
 
             try {
                 if (editId) {
+                    // تعديل
                     const docRef = doc(db, "records", editId);
                     await updateDoc(docRef, recordData);
-                    showToast('تم تحديث البيانات في السحابة بنجاح');
-                    window.resetFormFull();
+                    showToast('تم تحديث بيانات الحالة بنجاح');
                 } else {
+                    // إضافة جديدة
                     await addDoc(recordsCol, recordData);
-                    showToast('تم حفظ الحالة بنجاح في السحابة');
-                    window.clearPatientFieldsOnly();
+                    showToast('تم حفظ الحالة بنجاح');
                 }
             } catch (err) {
-                console.error("خطأ الحفظ:", err);
-                alert("حدث خطأ أثناء الاتصال بقاعدة البيانات: " + err.message);
+                console.warn("تعذر الرفع السحابي، الحفظ محلياً:", err);
+                // حفظ بديل محلي في حال فشل الاتصال بالسحابة
+                if (editId) {
+                    const idx = records.findIndex(r => r.id === editId);
+                    if (idx !== -1) records[idx] = { id: editId, ...recordData };
+                } else {
+                    records.push({ id: 'local_' + Date.now(), ...recordData });
+                }
+                saveLocalBackup();
+                updateBadge();
+                window.renderRecordsTable();
+                showToast('تم الحفظ محلياً');
             } finally {
-                // إعادة تمكين الزر بشكل فوري ومؤكد
+                // تصفير مؤكد لحقول المريض ومفتاح التعديل لإتاحة الحالة التالية فوراً
+                window.clearPatientFieldsOnly();
                 saveBtn.disabled = false;
-                saveBtn.classList.remove('opacity-50');
+                saveBtn.innerHTML = '<span>💾 حفظ بيانات المريض في السجل</span>';
             }
         };
 
         window.deleteRecord = async function(id) {
             if (confirm('هل أنت متأكد من حذف هذا السجل نهائياً؟')) {
                 try {
-                    await deleteDoc(doc(db, "records", id));
-                    showToast('تم الحذف بنجاح');
+                    if (String(id).startsWith('local_')) {
+                        records = records.filter(r => r.id !== id);
+                        saveLocalBackup();
+                    } else {
+                        await deleteDoc(doc(db, "records", id));
+                    }
+                    showToast('تم حذف السجل');
                 } catch (err) {
                     alert('خطأ أثناء الحذف: ' + err.message);
                 }
@@ -532,7 +574,7 @@
             document.getElementById('transferReason').value = rec.transferReason || '';
             document.getElementById('notes').value = rec.notes || '';
 
-            document.getElementById('saveBtn').innerHTML = '<span>🔄 حفظ التعديل في السحابة</span>';
+            document.getElementById('saveBtn').innerHTML = '<span>🔄 حفظ التعديل</span>';
             document.getElementById('cancelEditBtn').classList.remove('hidden');
             window.scrollTo({ top: 0, behavior: 'smooth' });
         };
@@ -564,8 +606,7 @@
             
             const saveBtn = document.getElementById('saveBtn');
             saveBtn.disabled = false;
-            saveBtn.classList.remove('opacity-50');
-            saveBtn.innerHTML = '<span>💾 حفظ بيانات المريض في السجل السحابي</span>';
+            saveBtn.innerHTML = '<span>💾 حفظ بيانات المريض في السجل</span>';
             document.getElementById('cancelEditBtn').classList.add('hidden');
             
             updateSerialNumber();
@@ -855,12 +896,14 @@
             }, 3000);
         }
 
-        // ضبط التواريخ الافتراضية عند البدء
+        // ضبط التواريخ وقوائم البدء
         const today = new Date().toISOString().split('T')[0];
         document.getElementById('visitDate').value = today;
         document.getElementById('reportMonth').value = today.slice(0, 7);
         document.getElementById('staffReportDate').value = today;
         window.updateCategories();
+        updateSerialNumber();
+        window.renderRecordsTable();
     </script>
 </body>
 </html>
