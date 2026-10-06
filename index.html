@@ -451,27 +451,31 @@
             } catch(e) {}
         }
 
-        // الاستماع اللحظي للسحابة
-        onSnapshot(recordsCol, async (snapshot) => {
-            // لا تمسح نسخة Chrome إذا كانت السحابة فارغة؛ ارفعها أولاً إلى Firestore.
-            if (snapshot.empty && records.length > 0) {
-                const localRecords = [...records];
-                try {
-                    await Promise.all(localRecords.map((record, index) => {
-                        const recordId = String(record.id || `local_${Date.now()}_${index}`);
-                        return setDoc(doc(recordsCol, recordId), { ...record, id: recordId });
-                    }));
-                } catch (error) {
-                    console.warn('تعذر رفع النسخة المحلية إلى Firestore:', error);
-                    saveLocalBackup();
-                }
-                return;
-            }
+        async function uploadLocalRecords(snapshot) {
+            if (!records.length) return false;
 
-            records = [];
-            snapshot.forEach((docSnap) => {
-                records.push({ id: docSnap.id, ...docSnap.data() });
+            const cloudIds = new Set(snapshot.docs.map(docSnap => docSnap.id));
+            // عند كون السحابة فارغة نرحّل كل النسخة المحلية، وإلا نرحّل فقط
+            // السجلات المحلية المؤقتة حتى لا نعيد إنشاء سجل حُذف من السحابة.
+            const pendingRecords = snapshot.empty
+                ? [...records]
+                : records.filter(record => String(record.id || '').startsWith('local_'));
+
+            const recordsToUpload = pendingRecords.filter(record => {
+                const id = String(record.id || '');
+                return !id || !cloudIds.has(id) || id.startsWith('local_');
             });
+            if (!recordsToUpload.length) return false;
+
+            await Promise.all(recordsToUpload.map((record, index) => {
+                const recordId = String(record.id || `local_${Date.now()}_${index}`);
+                return setDoc(doc(recordsCol, recordId), { ...record, id: recordId });
+            }));
+            return true;
+        }
+
+        function renderSyncedRecords(snapshot) {
+            records = snapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() }));
             saveLocalBackup();
             updateBadge();
             updateSerialNumber();
@@ -480,11 +484,25 @@
             window.updateStaffReportPreview();
             
             const syncEl = document.getElementById('syncIndicator');
-            if (syncEl) syncEl.innerText = "متصل بالسحابة 🟢";
+            if (syncEl) syncEl.innerText = `متصل بالسحابة 🟢 (${records.length})`;
+        }
+
+        // الاستماع اللحظي للسحابة مع ترحيل النسخة المحلية عند الحاجة
+        onSnapshot(recordsCol, async (snapshot) => {
+            try {
+                const uploaded = await uploadLocalRecords(snapshot);
+                if (uploaded) return; // ستصل لقطة جديدة تلقائياً بعد نجاح الرفع.
+                renderSyncedRecords(snapshot);
+            } catch (error) {
+                console.warn('تعذر رفع النسخة المحلية إلى Firestore:', error);
+                saveLocalBackup();
+                const syncEl = document.getElementById('syncIndicator');
+                if (syncEl) syncEl.innerText = "تعذر مزامنة البيانات 🔴";
+            }
         }, (error) => {
             console.error("Firestore sync error:", error);
             const syncEl = document.getElementById('syncIndicator');
-            if (syncEl) syncEl.innerText = "وضع محلي (غير متصل) 🟠";
+            if (syncEl) syncEl.innerText = "وضع محلي: تحقق من إعدادات Firebase 🔴";
         });
 
         // دالة حفظ السجل المزدوج
