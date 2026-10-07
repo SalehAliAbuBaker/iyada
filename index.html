@@ -1116,7 +1116,7 @@
             storageBucket: "iyada-81260.firebasestorage.app", messagingSenderId: "270230423238",
             appId: "1:270230423238:web:27966553ee0e6c9a6639c7", measurementId: "G-T4NEH7DZN3"
         };
-        const withTimeout = (p, ms = 30000) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(Object.assign(new Error('انتهت مهلة الاتصال'), { code: 'timeout' })), ms))]);
+        const withTimeout = (p, ms = 15000) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(Object.assign(new Error('انتهت مهلة الاتصال'), { code: 'timeout' })), ms))]);
 
         async function init() {
             let lastInitError = null;
@@ -1125,24 +1125,17 @@
                     const base = `https://www.gstatic.com/firebasejs/${v}/`;
                     const [A, F] = await Promise.all([import(base + 'firebase-app.js'), import(base + 'firebase-firestore.js')]);
                     const app = A.initializeApp(firebaseConfig);
-                    // تهيئة Firestore بوضع Long Polling لزيادة التوافق مع شبكات الهاتف
-                    // وبعض الشبكات التي تمنع/تعطل WebChannel وتسبب timeout.
-                    let db;
-                    try {
-                        db = F.initializeFirestore(app, {
-                            experimentalForceLongPolling: true,
-                            useFetchStreams: false
-                        });
-                    } catch (initErr) {
-                        // في حال سبق تهيئة Firestore في نفس الصفحة نستخدم النسخة القائمة.
-                        db = F.getFirestore(app);
-                    }
+                    // إجبار Firestore على Long Polling لتجاوز مشاكل WebChannel/الشبكات المقيدة.
+                    // يجب ضبط هذا عند إنشاء Firestore، لذلك نستخدم initializeFirestore بدل getFirestore.
+                    const db = F.initializeFirestore(app, {
+                        experimentalForceLongPolling: true
+                    });
                     const col = F.collection(db, "clinic_patients");
                     // دخول مجهول اختياري (يفيد إن قيّدت القواعد بـ request.auth != null)
-                    try { const Au = await import(base + 'firebase-auth.js'); await withTimeout(Au.signInAnonymously(Au.getAuth(app)), 12000); }
+                    try { const Au = await import(base + 'firebase-auth.js'); await withTimeout(Au.signInAnonymously(Au.getAuth(app)), 8000); }
                     catch (e) { console.info('الدخول المجهول غير مفعّل (اختياري):', e && e.code); }
                     window.firebaseClinic = {
-                        ready: true, version: v + ' / long-polling',
+                        ready: true, version: v,
                         async saveRecord(record) {
                             if (!record || !record.id) throw new Error('بيانات السجل غير صحيحة');
                             const clean = JSON.parse(JSON.stringify(record));
