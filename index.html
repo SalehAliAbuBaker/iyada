@@ -1108,71 +1108,74 @@
         setInterval(() => { const p = getPending(); if (p.up.length + p.del.length) flushPending(); }, 60000);
     </script>
    <script type="module">
-        // إصدار معروف مع بديل احتياطي، وأي فشل في التحميل يظهر في شارة المزامنة بدل أن يمرّ بصمت
-        const VERSIONS = ["11.10.0", "10.14.1"];
-        const firebaseConfig = {
-            apiKey: "AIzaSyC2qYG1-ipWBbYV9Ln689Ft68YNPA3TlTM",
-            authDomain: "iyada-81260.firebaseapp.com", projectId: "iyada-81260",
-            storageBucket: "iyada-81260.firebasestorage.app", messagingSenderId: "270230423238",
-            appId: "1:270230423238:web:27966553ee0e6c9a6639c7", measurementId: "G-T4NEH7DZN3"
-        };
-        const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
-        const withTimeout = (p, ms = 20000) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(Object.assign(new Error('انتهت مهلة الاتصال'), { code: 'timeout' })), ms))]);
+        // اتصال مباشر بواجهة Firestore REST عبر HTTPS (بدون مكتبة Firebase) — أخف وأوضح في رسائل الخطأ
+        const PROJECT = "iyada-81260", API_KEY = "AIzaSyC2qYG1-ipWBbYV9Ln689Ft68YNPA3TlTM", COLL = "clinic_patients";
+        const BASE = `https://firestore.googleapis.com/v1/projects/${PROJECT}/databases/(default)/documents`;
+        let idToken = null, lastAuthTry = 0;
 
-        async function init() {
-            let lastInitError = null;
-            for (const v of VERSIONS) {
-                try {
-                    const base = `https://www.gstatic.com/firebasejs/${v}/`;
-                    const [A, F] = await Promise.all([import(base + 'firebase-app.js'), import(base + 'firebase-firestore.js')]);
-                    const app = A.initializeApp(firebaseConfig);
-                    // الكشف التلقائي يختار WebChannel أو Long Polling حسب شبكة الهاتف.
-                    // هذا أكثر توافقاً من إجبار Long Polling دائماً على GitHub Pages.
-                    const db = F.initializeFirestore(app, {
-                        experimentalAutoDetectLongPolling: true,
-                        useFetchStreams: false
-                    });
-                    const col = F.collection(db, "clinic_patients");
-                    // دخول مجهول اختياري (يفيد إن قيّدت القواعد بـ request.auth != null)
-                    try { const Au = await import(base + 'firebase-auth.js'); await withTimeout(Au.signInAnonymously(Au.getAuth(app)), 8000); }
-                    catch (e) { console.info('الدخول المجهول غير مفعّل (اختياري):', e && e.code); }
-                    window.firebaseClinic = {
-                        ready: true, version: v + ' / force-long-polling',
-                        async saveRecord(record) {
-                            if (!record || !record.id) throw new Error('بيانات السجل غير صحيحة');
-                            const clean = JSON.parse(JSON.stringify(record));
-                            await withTimeout(F.setDoc(F.doc(col, String(record.id)), { ...clean, updatedAt: Number(record.updatedAt) || Date.now() }, { merge: true }));
-                            return true;
-                        },
-                        async loadRecords() {
-                            let lastError;
-                            for (let attempt = 1; attempt <= 3; attempt++) {
-                                try {
-                                    const snap = await withTimeout(F.getDocs(col)); const out = [];
-                                    snap.forEach(it => { const d = it.data(); out.push({ ...d, id: Number(d.id) || Number(it.id) }); });
-                                    return out;
-                                } catch (e) {
-                                    lastError = e;
-                                    if (attempt < 3 && ['timeout', 'unavailable'].includes(String(e && e.code))) await sleep(attempt * 1000);
-                                    else break;
-                                }
-                            }
-                            throw lastError;
-                        },
-                        async deleteRecord(id) { await withTimeout(F.deleteDoc(F.doc(col, String(id)))); return true; }
-                    };
-                    return;
-                } catch (e) {
-                    lastInitError = e;
-                    console.error('تعذر تحميل Firebase', v, e);
-                }
-            }
-            const c = String((lastInitError && lastInitError.code) || 'firebase-init-error');
-            const m = String((lastInitError && lastInitError.message) || lastInitError || 'سبب غير معروف');
-            window.firebaseInitError = 'تعذر تهيئة Firebase — ' + c + ': ' + m;
-            window.firebaseInitErrorRaw = { code: c, message: m, name: String((lastInitError && lastInitError.name) || 'Error') };
+        async function http(url, opts = {}, ms = 20000) {
+            const ctl = new AbortController(); const t = setTimeout(() => ctl.abort(), ms);
+            try { return await fetch(url, { ...opts, signal: ctl.signal }); }
+            catch (e) {
+                const aborted = e && e.name === 'AbortError';
+                throw Object.assign(new Error(aborted ? 'انتهت مهلة الاتصال بخدمة Google' : 'تعذر الوصول إلى googleapis.com (الشبكة تحجب الاتصال أو لا يوجد إنترنت)'), { code: aborted ? 'timeout' : 'unavailable' });
+            } finally { clearTimeout(t); }
         }
-        await init();
+
+        // دخول مجهول اختياري — يُستخدم فقط إذا رفضت القواعد الطلب بدون تسجيل دخول
+        async function anonSignIn() {
+            lastAuthTry = Date.now();
+            const r = await http(`https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${API_KEY}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{"returnSecureToken":true}' }, 10000);
+            const j = await r.json().catch(() => ({}));
+            if (!r.ok) throw new Error((j.error && j.error.message) || 'فشل الدخول المجهول');
+            idToken = j.idToken;
+        }
+
+        async function call(method, path, body) {
+            const send = () => http(`${BASE}${path}${path.includes('?') ? '&' : '?'}key=${API_KEY}`, {
+                method,
+                headers: { ...(body ? { 'Content-Type': 'application/json' } : {}), ...(idToken ? { Authorization: 'Bearer ' + idToken } : {}) },
+                body: body ? JSON.stringify(body) : undefined
+            });
+            let r = await send();
+            if ((r.status === 401 || r.status === 403) && Date.now() - lastAuthTry > 300000) {
+                try { await anonSignIn(); r = await send(); } catch (e) { console.info('الدخول المجهول غير متاح:', e.message); }
+            }
+            if (!r.ok) {
+                const j = await r.json().catch(() => ({})); const er = j.error || {}; const st = String(er.status || '');
+                const code = st === 'PERMISSION_DENIED' ? 'permission-denied' : st === 'NOT_FOUND' ? 'not-found' : st === 'UNAUTHENTICATED' ? 'unauthenticated' : (st || 'http-' + r.status).toLowerCase();
+                throw Object.assign(new Error(`HTTP ${r.status} — ${er.message || r.statusText}`), { code });
+            }
+            return r.json();
+        }
+
+        const enc = v => v === null || v === undefined ? { nullValue: null } : typeof v === 'boolean' ? { booleanValue: v } : typeof v === 'number' ? (Number.isInteger(v) ? { integerValue: String(v) } : { doubleValue: v }) : { stringValue: String(v) };
+        const dec = f => 'stringValue' in f ? f.stringValue : 'integerValue' in f ? Number(f.integerValue) : 'doubleValue' in f ? f.doubleValue : 'booleanValue' in f ? f.booleanValue : null;
+
+        window.firebaseClinic = {
+            ready: true, version: 'Firestore REST',
+            async saveRecord(record) {
+                if (!record || !record.id) throw new Error('بيانات السجل غير صحيحة');
+                const data = { ...record, updatedAt: Number(record.updatedAt) || Date.now() };
+                const fields = {}; for (const k in data) fields[k] = enc(data[k]);
+                await call('PATCH', `/${COLL}/${encodeURIComponent(String(record.id))}`, { fields });
+                return true;
+            },
+            async loadRecords() {
+                const out = []; let token = '';
+                do {
+                    const j = await call('GET', `/${COLL}?pageSize=300${token ? '&pageToken=' + encodeURIComponent(token) : ''}`);
+                    (j.documents || []).forEach(d => {
+                        const o = {}; for (const k in (d.fields || {})) o[k] = dec(d.fields[k]);
+                        o.id = Number(o.id) || Number(d.name.split('/').pop());
+                        out.push(o);
+                    });
+                    token = j.nextPageToken || '';
+                } while (token);
+                return out;
+            },
+            async deleteRecord(id) { await call('DELETE', `/${COLL}/${encodeURIComponent(String(id))}`); return true; }
+        };
         window.dispatchEvent(new Event('fb-init'));
    </script>
 </body>
