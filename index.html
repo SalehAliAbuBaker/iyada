@@ -453,7 +453,7 @@
             const c = String((e && e.code) || '');
             const m = String((e && e.message) || e || '');
             if (c.includes('permission-denied')) return 'قواعد Firestore ترفض القراءة/الكتابة (permission-denied)';
-            if (c.includes('unavailable') || c === 'timeout') return 'لا يوجد اتصال بالإنترنت أو خدمة Firebase غير متاحة';
+            if (c.includes('unavailable') || c === 'timeout') return 'لم تستجب خدمة Firestore خلال المهلة. تحقق من الشبكة أو أوقف VPN/مانع الإعلانات ثم أعد المحاولة';
             if (c.includes('not-found') || c.includes('failed-precondition')) return 'قاعدة Firestore غير مُنشأة أو غير جاهزة في المشروع';
             return (c || 'خطأ غير مصنف') + (m ? ': ' + m : '');
         }
@@ -1116,7 +1116,8 @@
             storageBucket: "iyada-81260.firebasestorage.app", messagingSenderId: "270230423238",
             appId: "1:270230423238:web:27966553ee0e6c9a6639c7", measurementId: "G-T4NEH7DZN3"
         };
-        const withTimeout = (p, ms = 30000) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(Object.assign(new Error('انتهت مهلة الاتصال'), { code: 'timeout' })), ms))]);
+        const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+        const withTimeout = (p, ms = 20000) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(Object.assign(new Error('انتهت مهلة الاتصال'), { code: 'timeout' })), ms))]);
 
         async function init() {
             let lastInitError = null;
@@ -1125,10 +1126,10 @@
                     const base = `https://www.gstatic.com/firebasejs/${v}/`;
                     const [A, F] = await Promise.all([import(base + 'firebase-app.js'), import(base + 'firebase-firestore.js')]);
                     const app = A.initializeApp(firebaseConfig);
-                    // تهيئة Firestore فعلياً بوضع Long Polling للشبكات التي تعيق WebChannel.
-                    // لا تستخدم getFirestore() هنا، لأن ذلك يعيد التهيئة الافتراضية.
+                    // الكشف التلقائي يختار WebChannel أو Long Polling حسب شبكة الهاتف.
+                    // هذا أكثر توافقاً من إجبار Long Polling دائماً على GitHub Pages.
                     const db = F.initializeFirestore(app, {
-                        experimentalForceLongPolling: true,
+                        experimentalAutoDetectLongPolling: true,
                         useFetchStreams: false
                     });
                     const col = F.collection(db, "clinic_patients");
@@ -1144,9 +1145,19 @@
                             return true;
                         },
                         async loadRecords() {
-                            const snap = await withTimeout(F.getDocs(col)); const out = [];
-                            snap.forEach(it => { const d = it.data(); out.push({ ...d, id: Number(d.id) || Number(it.id) }); });
-                            return out;
+                            let lastError;
+                            for (let attempt = 1; attempt <= 3; attempt++) {
+                                try {
+                                    const snap = await withTimeout(F.getDocs(col)); const out = [];
+                                    snap.forEach(it => { const d = it.data(); out.push({ ...d, id: Number(d.id) || Number(it.id) }); });
+                                    return out;
+                                } catch (e) {
+                                    lastError = e;
+                                    if (attempt < 3 && ['timeout', 'unavailable'].includes(String(e && e.code))) await sleep(attempt * 1000);
+                                    else break;
+                                }
+                            }
+                            throw lastError;
                         },
                         async deleteRecord(id) { await withTimeout(F.deleteDoc(F.doc(col, String(id)))); return true; }
                     };
