@@ -36,55 +36,308 @@
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
             background: #94a3b8;
         }
+        .btn-action-uniform {
+            height: 42px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            font-weight: 700;
+            border-radius: 12px;
+            width: 100%;
+            transition: all 0.2s ease-in-out;
+        }
+
+        #reportsTab { font-family: Tahoma, Arial, sans-serif; line-height: 1.7; }
+        #reportsTab h3 { font-size: 16px; line-height: 1.6; }
+        #reportsTab input, #reportsTab select, #reportsTab button { font-family: inherit; }
+        .report-summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; margin-bottom: 12px; border: 1px solid #99d5cc; border-radius: 10px; background: #f0fdfa; color: #115e59; font-size: 13px; font-weight: bold; }
+        .report-summary-count { font-size: 24px; line-height: 1.3; font-weight: bold; }
+        .report-period-options { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+        .period-option { border: 1px solid #cbd5e1; border-radius: 8px; background: white; color: #475569; padding: 7px 12px; font-size: 12px; font-weight: bold; cursor: pointer; }
+        .period-option:hover { background: #f0fdfa; }
+        .period-option[aria-pressed="true"] { background: #0f766e; border-color: #0f766e; color: white; }
+        input[type="date"] {
+            cursor: pointer;
+            direction: ltr;
+            text-align: center;
+            min-height: 38px;
+            min-width: 0;
+            box-sizing: border-box;
+        }
+        .report-footer { display: none; }
+        .report-basmala {
+            display: none;
+            text-align: center;
+            font-size: 18px;
+            font-weight: 700;
+            margin: 0 0 16px;
+        }
+        @media print {
+            .printable-target .overflow-x-auto,
+            .printable-target .overflow-y-auto {
+                overflow: visible !important;
+                max-height: none !important;
+            }
+            .printable-target table {
+                width: 100% !important;
+                table-layout: fixed;
+                border-collapse: collapse;
+                font-size: 9px !important;
+            }
+            .printable-target th, .printable-target td {
+                border: 1px solid #94a3b8 !important;
+                padding: 4px 3px !important;
+                white-space: normal !important;
+                overflow-wrap: anywhere;
+                vertical-align: top;
+            }
+            .printable-target .truncate, .printable-target .whitespace-nowrap {
+                white-space: normal !important;
+                overflow: visible !important;
+                text-overflow: clip !important;
+                max-width: none !important;
+            }
+            .printable-target thead { display: table-header-group; }
+            .printable-target tr { break-inside: avoid; }
+            .report-date { direction: ltr; unicode-bidi: isolate; }
+
+            .printable-target {
+                min-height: 199mm;
+                box-sizing: border-box;
+                justify-content: flex-start !important;
+            }
+            #printSectionCategories.printable-target,
+            #printSectionStaff.printable-target { min-height: 286mm; }
+            .printable-target .report-footer {
+                display: block !important;
+                margin-top: auto;
+                padding-top: 16px;
+                text-align: center;
+                font-size: 12px;
+                color: #64748b;
+                break-inside: avoid;
+            }
+            .printable-target .report-basmala {
+                display: block !important;
+            }
+            @page {
+                size: A4 landscape;
+                margin: 5mm;
+            }
+            @page monthlyReport {
+                size: A4 portrait;
+                margin: 5mm;
+            }
+            #printSectionCategories.printable-target,
+            #printSectionStaff.printable-target {
+                page: monthlyReport;
+            }
+            #printSectionCategories.printable-target .max-h-64,
+            #printSectionStaff.printable-target .max-h-64 {
+                max-height: none !important;
+                overflow: visible !important;
+            }
+            body * {
+                visibility: hidden !important;
+            }
+            .printable-target, .printable-target * {
+                visibility: visible !important;
+            }
+            .printable-target {
+                position: absolute !important;
+                left: 0 !important;
+                top: 0 !important;
+                width: 100% !important;
+                border: none !important;
+                box-shadow: none !important;
+                padding: 0 !important;
+                background: white !important;
+            }
+            .no-print {
+                display: none !important;
+            }
+        }
     </style>
 </head>
-<body class="min-h-screen text-slate-800">
+<body class="min-h-screen text-slate-800 flex flex-col justify-between">
 
-    <!-- الهيدر العلوي -->
-    <header class="bg-teal-800 text-white shadow-lg sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
-            <div class="flex items-center gap-3">
-                <div class="bg-white text-teal-800 p-2 rounded-lg shadow">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                    </svg>
+    <!-- نافذة تسجيل الدخول المنبثقة -->
+    <div id="loginModal" class="fixed inset-0 bg-slate-900/80 z-[100] flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-md rounded-2xl shadow-2xl p-6 border border-slate-200">
+            <div class="text-center mb-6">
+                <div class="inline-flex p-3 bg-teal-50 text-teal-800 rounded-2xl mb-2 font-black text-3xl">🏥</div>
+                <h2 class="text-2xl font-black text-teal-900">تسجيل الدخول للنظام</h2>
+                <p class="text-xs text-slate-500 mt-1">الرجاء إدخال بيانات الحساب للمتابعة</p>
+            </div>
+            <form onsubmit="handleLogin(event)" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 mb-1">اسم المستخدم</label>
+                    <input type="text" id="loginUsername" required placeholder="أدخل اسم المستخدم..." class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 outline-none focus:border-teal-600 font-bold">
                 </div>
                 <div>
-                    <h1 class="text-2xl font-extrabold tracking-wide">سجل الواردين إلى العيادة</h1>
+                    <label class="block text-sm font-bold text-slate-700 mb-1">كلمة المرور</label>
+                    <input type="password" id="loginPassword" required placeholder="••••••••" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 outline-none focus:border-teal-600 font-bold">
+                </div>
+                <button type="submit" class="w-full bg-teal-700 hover:bg-teal-800 text-white font-bold py-3 rounded-xl shadow transition">
+                    تسجيل الدخول 🚪
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- القائمة الجانبية (Drawer Sidebar) للإعدادات وتغيير كلمة السر -->
+    <div id="sideDrawerOverlay" onclick="toggleSidebar(false)" class="fixed inset-0 bg-slate-900/50 z-50 hidden transition-opacity"></div>
+    <aside id="sideDrawer" class="fixed top-0 right-0 w-80 sm:w-96 h-full bg-white z-50 shadow-2xl transform translate-x-full transition-transform duration-300 flex flex-col">
+        <div class="bg-teal-800 text-white p-4 flex justify-between items-center">
+            <h2 class="text-base font-bold flex items-center gap-2">⚙️ إعدادات النظام</h2>
+            <button onclick="toggleSidebar(false)" class="text-white hover:text-slate-200 text-2xl font-bold">&times;</button>
+        </div>
+        
+        <div class="p-4 overflow-y-auto flex-1 space-y-5 custom-scrollbar text-sm">
+            <!-- 1. تغيير كلمة المرور للمستخدم الحالي -->
+            <div class="border border-slate-200 rounded-xl p-3.5 bg-slate-50">
+                <h3 class="font-bold text-teal-800 mb-2 flex items-center gap-1.5 text-xs">🔒 تغيير كلمة المرور الخاصة بي</h3>
+                <div class="space-y-2">
+                    <input type="password" id="currentPassInput" placeholder="كلمة المرور الحالية..." class="w-full border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs outline-none focus:border-teal-600 bg-white">
+                    <input type="password" id="newPassInput" placeholder="كلمة المرور الجديدة..." class="w-full border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs outline-none focus:border-teal-600 bg-white">
+                    <button onclick="changeMyPassword()" class="w-full bg-teal-700 hover:bg-teal-800 text-white py-1.5 rounded-lg text-xs font-bold transition">
+                        حفظ كلمة المرور الجديدة
+                    </button>
+                </div>
+            </div>
+
+            <!-- 2. إدارة الفروع / اسم العيادة -->
+            <div id="adminBranchesSection" class="border border-slate-200 rounded-xl p-3.5 bg-slate-50">
+                <h3 class="font-bold text-teal-800 mb-2 flex items-center gap-1.5 text-xs">🏢 إدارة الفروع (اسم العيادة)</h3>
+                <div class="flex gap-1.5 mb-2">
+                    <input type="text" id="newClinicBranch" placeholder="اسم الفرع الجديد..." class="flex-1 border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs outline-none focus:border-teal-600 bg-white">
+                    <button onclick="addClinicBranch()" class="bg-teal-700 hover:bg-teal-800 text-white px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap">إضافة</button>
+                </div>
+                <div id="branchesListSettings" class="max-h-36 overflow-y-auto space-y-1.5"></div>
+            </div>
+
+            <!-- 3. إدارة المستخدمين والصلاحيات -->
+            <div id="adminUsersSection" class="border border-slate-200 rounded-xl p-3.5 bg-slate-50">
+                <h3 class="font-bold text-teal-800 mb-2 flex items-center gap-1.5 text-xs">👥 إدارة المستخدمين والصلاحيات</h3>
+                <div class="space-y-2 mb-2 bg-white p-2.5 rounded-lg border border-slate-200">
+                    <input type="text" id="newUserName" placeholder="الاسم الكامل..." class="w-full border border-slate-300 rounded-lg px-2.5 py-1 text-xs outline-none focus:border-teal-600">
+                    <div class="grid grid-cols-2 gap-1.5">
+                        <input type="text" id="newUserUsername" placeholder="اسم الدخول..." class="border border-slate-300 rounded-lg px-2 py-1 text-xs outline-none focus:border-teal-600">
+                        <input type="password" id="newUserPassword" placeholder="كلمة المرور..." class="border border-slate-300 rounded-lg px-2 py-1 text-xs outline-none focus:border-teal-600">
+                    </div>
+                    
+                    <div class="pt-1">
+                        <span class="block text-[11px] font-bold text-slate-600 mb-1">الصلاحيات:</span>
+                        <div class="grid grid-cols-2 gap-1.5 text-xs">
+                            <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" id="permAdd" checked class="accent-teal-600"> الإضافة</label>
+                            <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" id="permEdit" checked class="accent-teal-600"> التعديل</label>
+                            <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" id="permDelete" class="accent-teal-600"> الحذف</label>
+                            <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" id="permView" checked class="accent-teal-600"> الاطلاع</label>
+                        </div>
+                    </div>
+
+                    <button onclick="addNewUser()" class="w-full bg-teal-700 hover:bg-teal-800 text-white py-1.5 rounded-lg text-xs font-bold mt-1">
+                        ➕ حفظ المستخدم
+                    </button>
+                </div>
+                <div id="usersListSettings" class="max-h-32 overflow-y-auto space-y-1.5"></div>
+            </div>
+
+            <!-- 4. إدارة المناوبين -->
+            <div id="adminStaffSection" class="border border-slate-200 rounded-xl p-3.5 bg-slate-50">
+                <h3 class="font-bold text-teal-800 mb-2 flex items-center gap-1.5 text-xs">👨‍⚕️ إدارة المناوبين</h3>
+                <div class="flex gap-1.5 mb-2">
+                    <input type="text" id="newStaffInput" placeholder="اسم المناوب الجديد..." class="flex-1 border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs outline-none focus:border-teal-600 bg-white">
+                    <button onclick="addNewStaff()" class="bg-teal-700 hover:bg-teal-800 text-white px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap">إضافة</button>
+                </div>
+                <div id="staffListSettings" class="max-h-32 overflow-y-auto space-y-1.5"></div>
+            </div>
+
+            <!-- 5. إدارة التصنيفات -->
+            <div id="adminCategorySection" class="border border-slate-200 rounded-xl p-3.5 bg-slate-50">
+                <h3 class="font-bold text-teal-800 mb-2 flex items-center gap-1.5 text-xs">🏷️ إدارة التصنيفات</h3>
+                <div class="space-y-1.5 mb-2">
+                    <input type="text" id="newCategoryInput" placeholder="اسم التصنيف..." class="w-full border border-slate-300 rounded-lg px-2.5 py-1 text-xs outline-none focus:border-teal-600 bg-white">
+                    <div class="flex gap-1.5">
+                        <select id="newCategoryGender" class="border border-slate-300 rounded-lg px-2 py-1 text-xs font-bold bg-white">
+                            <option value="ذكر">ذكر 👨</option>
+                            <option value="أنثى">أنثى 👩</option>
+                        </select>
+                        <button onclick="addNewCategory()" class="flex-1 bg-teal-700 hover:bg-teal-800 text-white px-2 py-1 rounded-lg text-xs font-bold">إضافة التصنيف</button>
+                    </div>
+                </div>
+                <div id="categoryListSettings" class="max-h-32 overflow-y-auto space-y-1.5"></div>
+            </div>
+
+            <!-- 6. النسخ الاحتياطي وإدارة البيانات -->
+            <div id="adminDataSection" class="border border-teal-200 rounded-xl p-3.5 bg-teal-50/50">
+                <h3 class="font-bold text-teal-900 mb-1.5 flex items-center gap-1.5 text-xs">💾 النسخ الاحتياطي وقاعدة البيانات</h3>
+                <p class="text-[11px] text-slate-500 mb-2">حفظ نسخة احتياطية من السجلات محلياً أو استعادتها.</p>
+                <div class="flex flex-col gap-2">
+                    <button onclick="downloadBackup()" class="w-full bg-slate-700 hover:bg-slate-800 text-white text-xs font-bold py-2 rounded-lg transition">
+                        ⬇️ تحميل نسخة احتياطية (JSON)
+                    </button>
+                    <label class="w-full bg-slate-200 hover:bg-slate-300 text-slate-800 text-xs font-bold py-2 rounded-lg transition text-center cursor-pointer">
+                        ⬆️ استعادة نسخة احتياطية
+                        <input type="file" accept=".json" onchange="restoreBackup(event)" class="hidden">
+                    </label>
+                    <button onclick="clearAllDatabase()" class="w-full bg-red-100 hover:bg-red-200 text-red-700 border border-red-300 text-xs font-bold py-2 rounded-lg transition">
+                        🗑️ مسح السجلات نهائياً
+                    </button>
+                </div>
+            </div>
+
+            <!-- بطاقة المستخدم الحالي -->
+            <div class="p-2.5 bg-slate-100 rounded-xl text-xs space-y-1">
+                <div>المستخدم الحالي: <b id="drawerUsername" class="text-teal-900">-</b></div>
+                <div id="drawerPermissionsSummary" class="text-slate-600 font-medium">الصلاحيات: -</div>
+            </div>
+        </div>
+
+        <div class="p-3 border-t border-slate-200 bg-slate-50">
+            <button onclick="logout()" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 rounded-xl text-xs transition">
+                🚪 تسجيل الخروج
+            </button>
+        </div>
+    </aside>
+
+    <!-- الهيدر العلوي -->
+    <header class="bg-teal-800 text-white shadow-lg sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <button onclick="toggleSidebar(true)" class="p-2 bg-teal-700 hover:bg-teal-600 rounded-xl transition flex items-center justify-center shadow" title="فتح القائمة والإعدادات">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 6h16M4 12h16M4 18h16" />
+                    </svg>
+                </button>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h1 class="text-xl font-extrabold tracking-wide">سجل الواردين إلى العيادة</h1>
+                        <span id="headerClinicBranch" class="bg-teal-900 border border-teal-600 text-teal-200 text-xs px-2.5 py-0.5 rounded-full font-bold">المركز الرئيسي</span>
+                    </div>
                     <p class="text-teal-200 text-xs">نظام التسجيل الطبي وإصدار التقارير الإحصائية</p>
                 </div>
             </div>
 
-            <!-- أزرار التنقل بين الشاشات -->
-            <nav class="flex flex-wrap gap-2 bg-teal-900/50 p-1.5 rounded-xl">
-                <button onclick="switchTab('formTab')" id="btn-formTab" class="tab-btn tab-active px-4 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-2">
+            <nav class="flex flex-wrap items-center gap-2 bg-teal-900/50 p-1.5 rounded-xl">
+                <button onclick="switchTab('formTab')" id="btn-formTab" class="tab-btn tab-active px-3.5 py-2 rounded-lg text-xs md:text-sm font-bold transition-all flex items-center gap-1.5">
                     <span>➕ تسجيل حالة</span>
                 </button>
-                <button onclick="switchTab('recordsTab')" id="btn-recordsTab" class="tab-btn px-4 py-2 rounded-lg text-sm font-bold text-teal-100 hover:bg-teal-700/50 transition-all flex items-center gap-2">
+                <button onclick="switchTab('recordsTab')" id="btn-recordsTab" class="tab-btn px-3.5 py-2 rounded-lg text-xs md:text-sm font-bold text-teal-100 hover:bg-teal-700/50 transition-all flex items-center gap-1.5">
                     <span>📋 السجل العام</span>
                     <span id="totalBadge" class="bg-teal-600 text-white text-xs px-2 py-0.5 rounded-full">0</span>
                 </button>
-                <button onclick="switchTab('reportsTab')" id="btn-reportsTab" class="tab-btn px-4 py-2 rounded-lg text-sm font-bold text-teal-100 hover:bg-teal-700/50 transition-all flex items-center gap-2">
-                    <span>📊 التقارير والتصدير (Excel)</span>
+                <button onclick="switchTab('reportsTab')" id="btn-reportsTab" class="tab-btn px-3.5 py-2 rounded-lg text-xs md:text-sm font-bold text-teal-100 hover:bg-teal-700/50 transition-all flex items-center gap-1.5">
+                    <span>📊 التقارير والتصدير</span>
                 </button>
-            <button onclick="syncNow(true)" id="syncStatus" class="px-3 py-2 rounded-lg text-xs font-bold text-white bg-slate-600" title="اضغط للمزامنة الآن">☁️ ...</button>
+                <button onclick="syncNow(true)" id="syncStatus" class="px-3 py-2 rounded-lg text-xs font-bold text-white bg-slate-600 transition" title="اضغط للمزامنة الآن">☁️ ...</button>
             </nav>
         </div>
     </header>
 
-    <!-- لوحة تشخيص Firebase: تظهر فقط عند وجود خطأ مزامنة -->
-    <div id="firebaseDiagnostic" class="hidden max-w-7xl mx-auto mt-3 px-4">
-        <div class="bg-red-50 border border-red-300 text-red-900 rounded-xl p-4 shadow-sm">
-            <div class="font-extrabold mb-2">⚠️ تفاصيل خطأ Firebase</div>
-            <div id="firebaseDiagnosticText" class="text-sm whitespace-pre-wrap break-words font-mono" dir="ltr"></div>
-            <div class="mt-2 text-xs text-red-700" dir="rtl">
-                هذه اللوحة للتشخيص فقط، ولا تغيّر أو تحذف أي بيانات محفوظة محليًا.
-            </div>
-        </div>
-    </div>
-
     <!-- المحتوى الرئيسي -->
-    <main class="max-w-7xl mx-auto px-4 py-6">
+    <main class="max-w-7xl mx-auto px-4 py-6 flex-1 w-full">
 
         <!-- إشعار الحفظ -->
         <div id="toast" class="fixed bottom-5 left-5 bg-emerald-700 text-white px-6 py-3 rounded-xl shadow-2xl transform translate-y-24 opacity-0 transition-all duration-300 z-50 font-bold flex items-center gap-2">
@@ -97,7 +350,7 @@
             <form id="clinicForm" onsubmit="saveRecord(event)" class="space-y-6">
                 <input type="hidden" id="editId" value="">
 
-                <!-- بطاقة بيانات النوبة والمناوب -->
+                <!-- بيانات النوبة والمناوب -->
                 <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
                     <div class="flex justify-between items-center border-b border-slate-100 pb-3 mb-4">
                         <h2 class="text-lg font-bold text-teal-800 flex items-center gap-2">
@@ -117,12 +370,12 @@
 
                         <div>
                             <label class="block text-sm font-bold text-slate-700 mb-1">التاريخ <span class="text-red-500">*</span></label>
-                            <input type="date" id="visitDate" required class="w-full bg-white border border-slate-300 focus:border-teal-600 focus:ring-2 focus:ring-teal-100 rounded-xl px-3 py-2 outline-none transition">
+                            <input type="date" id="visitDate" required onclick="openPicker(this)" onfocus="openPicker(this)" class="w-full bg-white border border-slate-300 focus:border-teal-600 focus:ring-2 focus:ring-teal-100 rounded-xl px-3 py-2 outline-none transition font-bold">
                         </div>
 
                         <div>
                             <label class="block text-sm font-bold text-slate-700 mb-1">الفترة <span class="text-red-500">*</span></label>
-                            <select id="shiftPeriod" required class="w-full bg-white border border-slate-300 focus:border-teal-600 focus:ring-2 focus:ring-teal-100 rounded-xl px-3 py-2.5 outline-none transition">
+                            <select id="shiftPeriod" required class="w-full bg-white border border-slate-300 focus:border-teal-600 focus:ring-2 focus:ring-teal-100 rounded-xl px-3 py-2.5 outline-none transition font-bold">
                                 <option value="الصباحية">الصباحية</option>
                                 <option value="الظهيرة">الظهيرة</option>
                                 <option value="المسائية">المسائية</option>
@@ -131,23 +384,14 @@
 
                         <div>
                             <label class="block text-sm font-bold text-slate-700 mb-1">المناوب <span class="text-red-500">*</span></label>
-                            <select id="staffName" required class="w-full bg-white border border-slate-300 focus:border-teal-600 focus:ring-2 focus:ring-teal-100 rounded-xl px-3 py-2.5 outline-none transition">
-                                <option value="" disabled selected>-- اختر المناوب --</option>
-                                <option value="مهدي عمر علوي الحامد">مهدي عمر علوي الحامد</option>
-                                <option value="صالح عيدروس سالم بن الشيخ أبوبكر">صالح عيدروس سالم بن الشيخ أبوبكر</option>
-                                <option value="د. وجيه أحمد مشهور الجنيد">د. وجيه أحمد مشهور الجنيد</option>
-                                <option value="د. عبدالله أحمد عبدالرحمن الكاف">د. عبدالله أحمد عبدالرحمن الكاف</option>
-                                <option value="رقية علي عبدالوهاب بن عثمان">رقية علي عبدالوهاب بن عثمان</option>
-                                <option value="زهراء سالم حسن بن شهاب">زهراء سالم حسن بن شهاب</option>
-                                <option value="كرامه سعيد حميد باجراد">كرامه سعيد حميد باجراد</option>
-                                <option value="عبدالله عمر عبدالرحمن الخطيب">عبدالله عمر عبدالرحمن الخطيب</option>
-                                <option value="نعيم هادي مبارك باصبيح">نعيم هادي مبارك باصبيح</option>
+                            <select id="staffName" required class="w-full bg-white border border-slate-300 focus:border-teal-600 focus:ring-2 focus:ring-teal-100 rounded-xl px-3 py-2.5 outline-none transition font-bold">
+                                <!-- تتعبأ ديناميكياً -->
                             </select>
                         </div>
                     </div>
                 </div>
 
-                <!-- بطاقة بيانات المريض -->
+                <!-- بيانات المريض -->
                 <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
                     <h2 class="text-lg font-bold text-teal-800 flex items-center gap-2 border-b border-slate-100 pb-3 mb-4">
                         <span class="w-2 h-6 bg-teal-600 rounded-full"></span>
@@ -157,7 +401,7 @@
                     <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
                         <div class="md:col-span-5">
                             <label class="block text-sm font-bold text-slate-700 mb-1">اسم المريض <span class="text-red-500">*</span></label>
-                            <input type="text" id="patientName" required placeholder="أدخل الاسم الثلاثي أو الرباعي..." class="w-full bg-white border border-slate-300 focus:border-teal-600 focus:ring-2 focus:ring-teal-100 rounded-xl px-4 py-2.5 outline-none transition">
+                            <input type="text" id="patientName" required placeholder="أدخل الاسم الثلاثي أو الرباعي..." class="w-full bg-white border border-slate-300 focus:border-teal-600 focus:ring-2 focus:ring-teal-100 rounded-xl px-4 py-2.5 outline-none transition font-bold">
                         </div>
 
                         <div class="md:col-span-3">
@@ -177,13 +421,13 @@
                         <div class="md:col-span-4">
                             <label class="block text-sm font-bold text-slate-700 mb-1">التصنيف <span class="text-red-500">*</span></label>
                             <select id="patientCategory" required class="w-full bg-white border border-slate-300 focus:border-teal-600 focus:ring-2 focus:ring-teal-100 rounded-xl px-3 py-2.5 outline-none transition font-medium">
-                                <!-- يتم تعبئتها تلقائياً عبر الجافاسكربت بناءً على النوع -->
+                                <!-- تتعبأ تلقائياً حسب النوع -->
                             </select>
                         </div>
                     </div>
                 </div>
 
-                <!-- بطاقة البيانات الطبية والإجراءات -->
+                <!-- البيانات الطبية مع التشخيص -->
                 <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
                     <div class="flex justify-between items-center border-b border-slate-100 pb-3 mb-4">
                         <h2 class="text-lg font-bold text-teal-800 flex items-center gap-2">
@@ -195,6 +439,12 @@
                             <input type="checkbox" id="isExamined" checked class="w-5 h-5 accent-teal-600 rounded">
                             <span>المعاينة: تمت المعاينة</span>
                         </label>
+                    </div>
+
+                    <!-- حقل التشخيص الطبي -->
+                    <div class="mb-4">
+                        <label class="block text-sm font-bold text-slate-700 mb-1">🩺 التشخيص الطبي (Diagnosis)</label>
+                        <textarea id="diagnosis" rows="2" placeholder="اكتب التشخيص الطبي للحالة..." class="w-full bg-white border border-slate-300 focus:border-teal-600 focus:ring-2 focus:ring-teal-100 rounded-xl p-3 outline-none transition font-semibold"></textarea>
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
@@ -213,11 +463,11 @@
                     <div class="grid grid-cols-1 md:grid-cols-4 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-200 mb-4">
                         <div>
                             <label class="block text-xs font-bold text-slate-600 mb-1">🛏️ ترقيد من تاريخ</label>
-                            <input type="date" id="admitFrom" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-teal-600">
+                            <input type="date" id="admitFrom" onclick="openPicker(this)" onfocus="openPicker(this)" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-teal-600 font-bold">
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-slate-600 mb-1">🛏️ ترقيد إلى تاريخ</label>
-                            <input type="date" id="admitTo" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-teal-600">
+                            <input type="date" id="admitTo" onclick="openPicker(this)" onfocus="openPicker(this)" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-teal-600 font-bold">
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-slate-600 mb-1">🚑 جهة التحويل</label>
@@ -257,8 +507,8 @@
                     <h2 class="text-xl font-bold text-teal-800">📋 سجل الحالات المسجلة</h2>
                     
                     <div class="flex flex-wrap items-center gap-2 w-full md:w-auto">
-                        <input type="text" id="searchInput" oninput="renderRecordsTable()" placeholder="🔍 بحث باسم المريض أو المناوب أو التصنيف..." class="flex-1 md:w-72 border border-slate-300 rounded-xl px-4 py-2 text-sm outline-none focus:border-teal-600">
-                        <input type="date" id="filterDateInput" onchange="renderRecordsTable()" class="border border-slate-300 rounded-xl px-3 py-2 text-sm outline-none focus:border-teal-600">
+                        <input type="text" id="searchInput" oninput="renderRecordsTable()" placeholder="🔍 بحث بالاسم، المناوب، التشخيص..." class="flex-1 md:w-72 border border-slate-300 rounded-xl px-4 py-2 text-sm outline-none focus:border-teal-600 font-bold">
+                        <input type="date" id="filterDateInput" onclick="openPicker(this)" onfocus="openPicker(this)" onchange="renderRecordsTable()" class="border border-slate-300 rounded-xl px-3 py-2 text-sm outline-none focus:border-teal-600 font-bold">
                         <button onclick="document.getElementById('filterDateInput').value=''; document.getElementById('searchInput').value=''; renderRecordsTable();" class="bg-slate-100 hover:bg-slate-200 text-slate-600 px-3 py-2 rounded-xl text-sm font-bold">
                             عرض الكل
                         </button>
@@ -277,6 +527,7 @@
                                 <th class="p-3">النوع</th>
                                 <th class="p-3">التصنيف</th>
                                 <th class="p-3">المعاينة</th>
+                                <th class="p-3">التشخيص</th>
                                 <th class="p-3">العلاج</th>
                                 <th class="p-3">المختبر</th>
                                 <th class="p-3">الترقيد</th>
@@ -286,7 +537,7 @@
                             </tr>
                         </thead>
                         <tbody id="recordsTableBody" class="divide-y divide-slate-100">
-                            <!-- يتم تعبئتها بالجافاسكربت -->
+                            <!-- تتعبأ بالجافاسكربت -->
                         </tbody>
                     </table>
                 </div>
@@ -296,119 +547,220 @@
         <!-- ==================== 3. شاشة التقارير والتصدير ==================== -->
         <section id="reportsTab" class="tab-content hidden space-y-6">
             
+            <!-- 1. التقرير الشامل والموسع (A4 أفقي - من وإلى تاريخ) -->
+            <div id="printSectionComprehensive" class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 flex flex-col justify-between">
+                <div class="report-basmala">بسم الله الرحمن الرحيم</div>
+                <div>
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 border-b border-slate-100 pb-3 mb-4">
+                        <div class="flex items-center gap-3">
+                            <span class="bg-teal-100 text-teal-800 p-2.5 rounded-xl font-bold text-xl">📑</span>
+                            <div>
+                                <h3 class="text-lg font-bold text-slate-800">تقرير الحالات المسجلة</h3>
+                                <p class="text-xs text-slate-500">استعلام شامل لكافة الحالات خلال فترة محددة (من - إلى)</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3 no-print">
+                        <label for="compFilterMode" class="block text-xs font-bold text-slate-600 mb-1">عرض التقرير حسب:</label>
+                        <select id="compFilterMode" onchange="updateComprehensiveFilterMode()" class="bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold">
+                            <option value="date">بالتاريخ</option>
+                            <option value="name">الاسم — ترتيب أبجدي</option>
+                        </select>
+                    </div>
+<div class="report-period-options no-print" aria-label="اختيار الفترة السريعة">
+                            <button type="button" class="period-option" data-period-prefix="comp" data-period="today" aria-pressed="false" onclick="setReportPeriod('comp', 'today')">اليوم</button>
+                            <button type="button" class="period-option" data-period-prefix="comp" data-period="month" aria-pressed="false" onclick="setReportPeriod('comp', 'month')">هذا الشهر</button>
+                            <button type="button" class="period-option" data-period-prefix="comp" data-period="previous" aria-pressed="false" onclick="setReportPeriod('comp', 'previous')">الشهر السابق</button>
+                        </div>
+                    <!-- فلاتر من وإلى تاريخ والبحث -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4 no-print">
+                        <div data-comp-filter="date">
+                            <label class="block text-xs font-bold text-slate-600 mb-1">من تاريخ:</label>
+                            <input type="date" id="compStartDate" onclick="openPicker(this)" onfocus="openPicker(this)" onchange="renderComprehensiveReportTable()" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold outline-none focus:border-teal-600">
+                        </div>
+                        <div data-comp-filter="date">
+                            <label class="block text-xs font-bold text-slate-600 mb-1">إلى تاريخ:</label>
+                            <input type="date" id="compEndDate" onclick="openPicker(this)" onfocus="openPicker(this)" onchange="renderComprehensiveReportTable()" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold outline-none focus:border-teal-600">
+                        </div>
+                        <div data-comp-filter="name" class="hidden sm:col-span-2 text-xs text-slate-500 py-2">تُعرض جميع الحالات مرتبة أبجديًا حسب اسم المريض.</div>
+                    </div>
+
+                    <div class="report-summary"><span>إجمالي المسجلين</span><span id="compSummaryTotal" class="report-summary-count">0</span></div>
+                    <!-- جدول التقرير الموسع -->
+                    <div class="overflow-x-auto custom-scrollbar border border-slate-200 rounded-xl mb-4">
+                        <table class="w-full text-xs text-right border-collapse">
+                            <thead class="bg-slate-100 text-slate-700 font-bold border-b border-slate-200 whitespace-nowrap">
+                                <tr>
+                                    <th class="p-2.5 border-l border-slate-200">#</th>
+                                    <th class="p-2.5 border-l border-slate-200">الفرع</th>
+                                    <th class="p-2.5 border-l border-slate-200">التاريخ</th>
+                                    <th class="p-2.5 border-l border-slate-200">الفترة</th>
+                                    <th class="p-2.5 border-l border-slate-200">المناوب</th>
+                                    <th class="p-2.5 border-l border-slate-200">اسم المريض</th>
+                                    <th class="p-2.5 border-l border-slate-200">النوع</th>
+                                    <th class="p-2.5 border-l border-slate-200">التصنيف</th>
+                                    <th class="p-2.5 border-l border-slate-200">المعاينة</th>
+                                    <th class="p-2.5 border-l border-slate-200">التشخيص الطبي</th>
+                                    <th class="p-2.5 border-l border-slate-200">العلاج المصروف</th>
+                                    <th class="p-2.5 border-l border-slate-200">فحوصات المختبر</th>
+                                    <th class="p-2.5 border-l border-slate-200">الترقيد (من - إلى)</th>
+                                    <th class="p-2.5 border-l border-slate-200">التحويل وسببه</th>
+                                    <th class="p-2.5 border-l border-slate-200">الملاحظات</th>
+                                    <th class="p-2.5">المسجل</th>
+                                </tr>
+                            </thead>
+                            <tbody id="compTableBody" class="divide-y divide-slate-100 whitespace-nowrap">
+                                <!-- تتعبأ ديناميكياً -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="pt-3 border-t border-slate-100 grid grid-cols-3 gap-2 no-print">
+                    <button onclick="printSpecificReport('comprehensive')" class="btn-action-uniform bg-slate-800 hover:bg-slate-900 text-white shadow">
+                        🖨️ طباعة
+                    </button>
+                    <button onclick="exportComprehensiveExcel()" class="btn-action-uniform bg-emerald-700 hover:bg-emerald-800 text-white shadow">
+                        📥 تصدير إكسل
+                    </button>
+                    <button onclick="shareSpecificReportPDF('comprehensive')" class="btn-action-uniform bg-red-700 hover:bg-red-800 text-white shadow">
+                        📄 مشاركة PDF
+                    </button>
+                </div>
+            </div>
+
+            <!-- 2. تقرير إحصائية التصنيفات وتقرير المناوبين بنطاق زمني (من - إلى) -->
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                
-                <!-- التقرير الأول والثاني: تقارير الشهر (التصنيفات + السجل الكامل) -->
-                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 flex flex-col justify-between">
+                <!-- تقرير التصنيفات خلال فترة -->
+                <div id="printSectionCategories" class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 flex flex-col justify-between">
+                <div class="report-basmala">بسم الله الرحمن الرحيم</div>
                     <div>
                         <div class="flex items-center gap-3 border-b border-slate-100 pb-3 mb-4">
                             <span class="bg-teal-100 text-teal-800 p-2.5 rounded-xl font-bold text-xl">📊</span>
                             <div>
-                                <h3 class="text-lg font-bold text-slate-800">التقارير الشهرية (التصنيفات والسجل الكامل)</h3>
-                                <p class="text-xs text-slate-500">اختر الشهر والسنة لمعاينة الإحصائيات وتصدير ملفات الإكسل</p>
+                                <h3 class="text-lg font-bold text-slate-800">إحصائيات التصنيفات</h3>
+                                <p class="text-xs text-slate-500">حصر أعداد الواردين حسب التصنيف في الفترة (من - إلى)</p>
                             </div>
                         </div>
 
-                        <div class="mb-4">
-                            <label class="block text-sm font-bold text-slate-700 mb-2">حدد الشهر والسنة:</label>
-                            <input type="month" id="reportMonth" onchange="updateMonthlyPreview()" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 font-bold text-teal-900 outline-none focus:border-teal-600">
+<div class="report-period-options no-print" aria-label="اختيار الفترة السريعة">
+                            <button type="button" class="period-option" data-period-prefix="cat" data-period="today" aria-pressed="false" onclick="setReportPeriod('cat', 'today')">اليوم</button>
+                            <button type="button" class="period-option" data-period-prefix="cat" data-period="month" aria-pressed="false" onclick="setReportPeriod('cat', 'month')">هذا الشهر</button>
+                            <button type="button" class="period-option" data-period-prefix="cat" data-period="previous" aria-pressed="false" onclick="setReportPeriod('cat', 'previous')">الشهر السابق</button>
+                        </div>
+                        <!-- اختيار الفترة (من - إلى) -->
+                        <div class="grid grid-cols-2 gap-3 mb-4 no-print">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-600 mb-1">من تاريخ:</label>
+                                <input type="date" id="catStartDate" onclick="openPicker(this)" onfocus="openPicker(this)" onchange="updateCategoryRangePreview()" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 font-bold text-xs outline-none focus:border-teal-600">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-600 mb-1">إلى تاريخ:</label>
+                                <input type="date" id="catEndDate" onclick="openPicker(this)" onfocus="openPicker(this)" onchange="updateCategoryRangePreview()" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 font-bold text-xs outline-none focus:border-teal-600">
+                            </div>
                         </div>
 
-                        <!-- معاينة سريعة لأعداد التصنيفات في الشهر المختار -->
                         <div class="bg-slate-50 rounded-xl p-4 border border-slate-200 mb-4 max-h-64 overflow-y-auto custom-scrollbar">
-                            <div class="flex justify-between items-center mb-2 pb-2 border-b border-slate-200">
-                                <span class="font-bold text-xs text-slate-600">معاينة أعداد الواردين حسب التصنيف:</span>
-                                <span id="monthTotalCount" class="bg-teal-700 text-white text-xs px-2.5 py-1 rounded-full font-bold">الإجمالي: 0</span>
-                            </div>
-                            <div id="categoryPreviewList" class="space-y-1.5 text-sm">
-                                <!-- معاينة التصنيفات -->
-                            </div>
+                            <div class="report-summary"><span>إجمالي المسجلين</span><span id="catRangeTotalCount" class="report-summary-count">0</span></div>
+                            <div id="categoryPreviewList" class="space-y-1.5 text-sm"></div>
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-                        <button onclick="exportCategoryReportExcel()" class="bg-emerald-700 hover:bg-emerald-800 text-white font-bold py-3 px-4 rounded-xl shadow transition flex items-center justify-center gap-2 text-sm">
-                            <span>📥 تصدير إحصائية التصنيفات (Excel)</span>
+                    <div class="pt-3 border-t border-slate-100 grid grid-cols-3 gap-2 no-print">
+                        <button onclick="printSpecificReport('categories')" class="btn-action-uniform bg-slate-800 hover:bg-slate-900 text-white shadow">
+                            🖨️ طباعة
                         </button>
-                        <button onclick="exportFullMonthExcel()" class="bg-teal-700 hover:bg-teal-800 text-white font-bold py-3 px-4 rounded-xl shadow transition flex items-center justify-center gap-2 text-sm">
-                            <span>📥 تصدير السجل الكامل للشهر (Excel)</span>
+                        <button onclick="exportCategoryReportExcel()" class="btn-action-uniform bg-emerald-700 hover:bg-emerald-800 text-white shadow">
+                            📥 تصدير إكسل
+                        </button>
+                        <button onclick="shareSpecificReportPDF('categories')" class="btn-action-uniform bg-red-700 hover:bg-red-800 text-white shadow">
+                            📄 مشاركة PDF
                         </button>
                     </div>
                 </div>
 
-                <!-- التقرير الثالث: تقرير إنتاجية المناوب في تاريخ معين -->
-                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 flex flex-col justify-between">
+                <!-- تقرير المناوبين لفترة محددة -->
+                <div id="printSectionStaff" class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 flex flex-col justify-between">
+                <div class="report-basmala">بسم الله الرحمن الرحيم</div>
                     <div>
                         <div class="flex items-center gap-3 border-b border-slate-100 pb-3 mb-4">
                             <span class="bg-blue-100 text-blue-800 p-2.5 rounded-xl font-bold text-xl">👨‍⚕️</span>
                             <div>
                                 <h3 class="text-lg font-bold text-slate-800">تقرير المناوبين وعدد المسجلين</h3>
-                                <p class="text-xs text-slate-500">معرفة عدد الواردين الذين سجلهم المناوب في تاريخ محدد</p>
+                                <p class="text-xs text-slate-500">معرفة عدد الحالات المسجلة للمناوبين خلال فترة</p>
                             </div>
                         </div>
 
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+<div class="report-period-options no-print" aria-label="اختيار الفترة السريعة">
+                            <button type="button" class="period-option" data-period-prefix="staff" data-period="today" aria-pressed="false" onclick="setReportPeriod('staff', 'today')">اليوم</button>
+                            <button type="button" class="period-option" data-period-prefix="staff" data-period="month" aria-pressed="false" onclick="setReportPeriod('staff', 'month')">هذا الشهر</button>
+                            <button type="button" class="period-option" data-period-prefix="staff" data-period="previous" aria-pressed="false" onclick="setReportPeriod('staff', 'previous')">الشهر السابق</button>
+                        </div>
+                        <!-- اختيار الفترة واسم المناوب -->
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-4 no-print">
                             <div>
-                                <label class="block text-sm font-bold text-slate-700 mb-1">التاريخ المحدد:</label>
-                                <input type="date" id="staffReportDate" onchange="updateStaffReportPreview()" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 font-bold outline-none focus:border-teal-600">
+                                <label class="block text-xs font-bold text-slate-600 mb-1">من تاريخ:</label>
+                                <input type="date" id="staffStartDate" onclick="openPicker(this)" onfocus="openPicker(this)" onchange="updateStaffReportPreview()" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-2.5 py-2 font-bold text-xs outline-none focus:border-teal-600">
                             </div>
                             <div>
-                                <label class="block text-sm font-bold text-slate-700 mb-1">اسم المناوب:</label>
-                                <select id="staffReportName" onchange="updateStaffReportPreview()" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-sm font-bold outline-none focus:border-teal-600">
-                                    <option value="ALL">-- جميع المناوبين في هذا اليوم --</option>
-                                    <option value="مهدي عمر علوي الحامد">مهدي عمر علوي الحامد</option>
-                                    <option value="صالح عيدروس سالم بن الشيخ أبوبكر">صالح عيدروس سالم بن الشيخ أبوبكر</option>
-                                    <option value="د. وجيه أحمد مشهور الجنيد">د. وجيه أحمد مشهور الجنيد</option>
-                                    <option value="د. عبدالله أحمد عبدالرحمن الكاف">د. عبدالله أحمد عبدالرحمن الكاف</option>
-                                    <option value="رقية علي عبدالوهاب بن عثمان">رقية علي عبدالوهاب بن عثمان</option>
-                                    <option value="زهراء سالم حسن بن شهاب">زهراء سالم حسن بن شهاب</option>
-                                    <option value="كرامه سعيد حميد باجراد">كرامه سعيد حميد باجراد</option>
-                                    <option value="عبدالله عمر عبدالرحمن الخطيب">عبدالله عمر عبدالرحمن الخطيب</option>
-                                    <option value="نعيم هادي مبارك باصبيح">نعيم هادي مبارك باصبيح</option>
+                                <label class="block text-xs font-bold text-slate-600 mb-1">إلى تاريخ:</label>
+                                <input type="date" id="staffEndDate" onclick="openPicker(this)" onfocus="openPicker(this)" onchange="updateStaffReportPreview()" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-2.5 py-2 font-bold text-xs outline-none focus:border-teal-600">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-600 mb-1">المناوب:</label>
+                                <select id="staffReportName" onchange="updateStaffReportPreview()" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-2 py-2 text-xs font-bold outline-none focus:border-teal-600">
+                                    <!-- تتعبأ ديناميكياً -->
                                 </select>
                             </div>
                         </div>
 
-                        <!-- نتيجة البحث للمناوب -->
+                        <div class="report-summary"><span>إجمالي المسجلين</span><span id="staffSummaryTotal" class="report-summary-count">0</span></div>
                         <div class="bg-slate-50 rounded-xl p-4 border border-slate-200 mb-4 max-h-64 overflow-y-auto custom-scrollbar">
-                            <div id="staffReportResult" class="space-y-2 text-sm">
-                                <!-- يتم تعبئتها بالجافاسكربت -->
-                            </div>
+                            <div id="staffReportResult" class="space-y-2 text-sm"></div>
                         </div>
                     </div>
 
-                    <button onclick="exportStaffReportExcel()" class="w-full bg-blue-700 hover:bg-blue-800 text-white font-bold py-3 px-4 rounded-xl shadow transition flex items-center justify-center gap-2 text-sm">
-                        <span>📥 تصدير تقرير المناوب لهذا اليوم (Excel)</span>
-                    </button>
-                </div>
-
-            </div>
-
-            <!-- قسم النسخ الاحتياطي للبيانات -->
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-                <h3 class="text-base font-bold text-slate-800 mb-2">⚙️ إدارة قاعدة البيانات والنسخ الاحتياطي</h3>
-                <p class="text-xs text-slate-500 mb-4">البيانات تُحفظ تلقائياً على هذا المتصفح. يمكنك تحميل نسخة احتياطية لحفظها في جهازك أو نقلها لجهاز آخر.</p>
-                <div class="flex flex-wrap gap-3">
-                    <button onclick="downloadBackup()" class="bg-slate-700 hover:bg-slate-800 text-white text-sm font-bold px-4 py-2.5 rounded-xl transition">
-                        ⬇️ تحميل نسخة احتياطية (JSON)
-                    </button>
-                    <label class="bg-slate-200 hover:bg-slate-300 text-slate-800 text-sm font-bold px-4 py-2.5 rounded-xl transition cursor-pointer">
-                        ⬆️ استعادة نسخة احتياطية
-                        <input type="file" accept=".json" onchange="restoreBackup(event)" class="hidden">
-                    </label>
-                    <button onclick="clearAllDatabase()" class="bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 text-sm font-bold px-4 py-2.5 rounded-xl transition mr-auto">
-                        🗑️ مسح كافة البيانات نهائياً
-                    </button>
+                    <div class="pt-3 border-t border-slate-100 grid grid-cols-3 gap-2 no-print">
+                        <button onclick="printSpecificReport('staff')" class="btn-action-uniform bg-slate-800 hover:bg-slate-900 text-white shadow">
+                            🖨️ طباعة
+                        </button>
+                        <button onclick="exportStaffReportExcel()" class="btn-action-uniform bg-emerald-700 hover:bg-emerald-800 text-white shadow">
+                            📥 تصدير إكسل
+                        </button>
+                        <button onclick="shareSpecificReportPDF('staff')" class="btn-action-uniform bg-red-700 hover:bg-red-800 text-white shadow">
+                            📄 مشاركة PDF
+                        </button>
+                    </div>
                 </div>
             </div>
-
         </section>
 
     </main>
 
     <script>
-        // ==================== القوائم الأساسية ====================
-        const MALE_CATEGORIES = [
+        // دالة فتح التقويم مباشرة بمجرد النقر أو التركيز على أي حقل تاريخ
+        function openPicker(input) {
+            try {
+                if (input && typeof input.showPicker === 'function') {
+                    input.showPicker();
+                }
+            } catch(e) {}
+        }
+
+        const DEFAULT_STAFF = [
+            "مهدي عمر علوي الحامد",
+            "صالح عيدروس سالم بن الشيخ أبوبكر",
+            "د. وجيه أحمد مشهور الجنيد",
+            "د. عبدالله أحمد عبدالرحمن الكاف",
+            "رقية علي عبدالوهاب بن عثمان",
+            "زهراء سالم حسن بن شهاب",
+            "كرامه سعيد حميد باجراد",
+            "عبدالله عمر عبدالرحمن الخطيب",
+            "نعيم هادي مبارك باصبيح"
+        ];
+
+        const DEFAULT_MALE_CATS = [
             "طالب بدار المصطفى",
             "طالب بالمدرسة",
             "ضيف وافد",
@@ -418,7 +770,7 @@
             "أخرى (ذكر)"
         ];
 
-        const FEMALE_CATEGORIES = [
+        const DEFAULT_FEMALE_CATS = [
             "طالبة بدار الزهراء",
             "طالبة بالمدرسة",
             "ضيفة وافدة",
@@ -428,12 +780,399 @@
             "أخرى (أنثى)"
         ];
 
-        const ALL_CATEGORIES = [...MALE_CATEGORIES, ...FEMALE_CATEGORIES];
+        const DEFAULT_BRANCHES = ["المركز الرئيسي", "فرع مدرسة دار المصطفى", "فرع دار الزهراء"];
+
+        const DEFAULT_ADMIN_USER = {
+            name: "مدير النظام",
+            username: "admin",
+            password: "123",
+            role: "admin",
+            permissions: { add: true, edit: true, delete: true, view: true }
+        };
 
         const STORAGE_KEY = 'clinic_patients_records_v1';
-        let records = [];
+        const STAFF_KEY = 'clinic_staff_list_v1';
+        const CATS_KEY = 'clinic_categories_v1';
+        const BRANCH_KEY = 'clinic_branches_v1';
+        const ACTIVE_BRANCH_KEY = 'clinic_active_branch_v1';
+        const USERS_KEY = 'clinic_users_list_v1';
+        const USER_SESSION_KEY = 'clinic_current_user_v1';
 
-        // ==================== المزامنة مع Google (Firestore) ====================
+        let records = [];
+        let staffList = [];
+        let categoryData = { male: [], female: [] };
+        let branchList = [];
+        let usersList = [];
+        let currentUser = null;
+
+        // ==================== نظام المستخدمين ====================
+        function initUsers() {
+            const saved = localStorage.getItem(USERS_KEY);
+            if (saved) {
+                try { usersList = JSON.parse(saved) || []; } catch(e) { usersList = []; }
+            }
+            if (!usersList.some(u => u.username === 'admin')) {
+                usersList.unshift(DEFAULT_ADMIN_USER);
+                saveUsers();
+            }
+        }
+
+        function saveUsers() {
+            localStorage.setItem(USERS_KEY, JSON.stringify(usersList));
+            renderUsersSettings();
+        }
+
+        function checkAuth() {
+            initUsers();
+            const saved = sessionStorage.getItem(USER_SESSION_KEY);
+            if (saved) {
+                currentUser = JSON.parse(saved);
+                document.getElementById('loginModal').classList.add('hidden');
+                applyPermissions();
+            } else {
+                document.getElementById('loginModal').classList.remove('hidden');
+            }
+        }
+
+        function handleLogin(e) {
+            e.preventDefault();
+            const u = document.getElementById('loginUsername').value.trim();
+            const p = document.getElementById('loginPassword').value.trim();
+            const found = usersList.find(x => x.username.toLowerCase() === u.toLowerCase() && (x.password === p || (x.username === 'admin' && (p === '123' || p === '123456'))));
+
+            if (found) {
+                currentUser = found;
+                sessionStorage.setItem(USER_SESSION_KEY, JSON.stringify(found));
+                document.getElementById('loginModal').classList.add('hidden');
+                applyPermissions();
+                showToast(`أهلاً بك يا ${found.name}`);
+            } else {
+                alert('اسم المستخدم أو كلمة المرور غير صحيحة!');
+            }
+        }
+
+        function logout() {
+            sessionStorage.removeItem(USER_SESSION_KEY);
+            currentUser = null;
+            toggleSidebar(false);
+            document.getElementById('loginModal').classList.remove('hidden');
+        }
+
+        function changeMyPassword() {
+            if (!currentUser) return;
+            const cur = document.getElementById('currentPassInput').value.trim();
+            const nxt = document.getElementById('newPassInput').value.trim();
+
+            if (!cur || !nxt) return alert('يرجى كتابة كلمة المرور الحالية والجديدة!');
+            if (currentUser.password !== cur && !(currentUser.username === 'admin' && (cur === '123' || cur === '123456'))) {
+                return alert('كلمة المرور الحالية غير صحيحة!');
+            }
+            if (nxt.length < 3) return alert('كلمة المرور يجب أن لا تقل عن 3 أحرف أو أرقام!');
+
+            const idx = usersList.findIndex(u => u.username.toLowerCase() === currentUser.username.toLowerCase());
+            if (idx !== -1) {
+                usersList[idx].password = nxt;
+                currentUser.password = nxt;
+                sessionStorage.setItem(USER_SESSION_KEY, JSON.stringify(currentUser));
+                saveUsers();
+                document.getElementById('currentPassInput').value = '';
+                document.getElementById('newPassInput').value = '';
+                showToast('تم تغيير وحفظ كلمة المرور بنجاح');
+            }
+        }
+
+        function hasPerm(permName) {
+            if (!currentUser) return false;
+            if (currentUser.role === 'admin') return true;
+            return !!(currentUser.permissions && currentUser.permissions[permName]);
+        }
+
+        function applyPermissions() {
+            if (!currentUser) return;
+            document.getElementById('drawerUsername').innerText = currentUser.name;
+            
+            const perms = [];
+            if (hasPerm('add')) perms.push('إضافة');
+            if (hasPerm('edit')) perms.push('تعديل');
+            if (hasPerm('delete')) perms.push('حذف');
+            if (hasPerm('view')) perms.push('اطلاع');
+            
+            document.getElementById('drawerPermissionsSummary').innerText = `الصلاحيات: ${perms.join(' - ') || 'لا توجد'}`;
+
+            const saveBtn = document.getElementById('saveBtn');
+            if (!hasPerm('add') && !hasPerm('edit')) {
+                saveBtn.disabled = true;
+                saveBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            } else {
+                saveBtn.disabled = false;
+                saveBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+
+            const isAdmin = currentUser.role === 'admin';
+            ['adminBranchesSection', 'adminUsersSection', 'adminStaffSection', 'adminCategorySection', 'adminDataSection'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.classList.toggle('hidden', !isAdmin);
+            });
+
+            renderRecordsTable();
+            renderComprehensiveReportTable();
+        }
+
+        function addNewUser() {
+            if (currentUser && currentUser.role !== 'admin') return alert('إضافة المستخدمين متاحة للمدير فقط!');
+            const name = document.getElementById('newUserName').value.trim();
+            const username = document.getElementById('newUserUsername').value.trim();
+            const pass = document.getElementById('newUserPassword').value.trim();
+
+            if (!name || !username || !pass) return alert('يرجى ملء جميع الحقول المطلوبة!');
+            if (usersList.some(u => u.username.toLowerCase() === username.toLowerCase())) return alert('اسم الدخول مستخدم بالفعل!');
+
+            usersList.push({
+                name: name,
+                username: username,
+                password: pass,
+                role: 'user',
+                permissions: {
+                    add: document.getElementById('permAdd').checked,
+                    edit: document.getElementById('permEdit').checked,
+                    delete: document.getElementById('permDelete').checked,
+                    view: document.getElementById('permView').checked
+                }
+            });
+            saveUsers();
+            document.getElementById('newUserName').value = '';
+            document.getElementById('newUserUsername').value = '';
+            document.getElementById('newUserPassword').value = '';
+            showToast('تمت إضافة المستخدم بنجاح');
+        }
+
+        function deleteUser(idx) {
+            if (currentUser && currentUser.role !== 'admin') return alert('الحذف متاح للمدير فقط!');
+            const u = usersList[idx];
+            if (u.role === 'admin') return alert('لا يمكن حذف حساب المدير الرئيسي!');
+            if (!confirm(`هل أنت متأكد من حذف المستخدم: ${u.name}؟`)) return;
+            usersList.splice(idx, 1);
+            saveUsers();
+            showToast('تم حذف المستخدم');
+        }
+
+        function renderUsersSettings() {
+            const list = document.getElementById('usersListSettings');
+            if (!list) return;
+            list.innerHTML = usersList.map((u, idx) => {
+                const perms = [];
+                if (u.permissions.add) perms.push('إضافة');
+                if (u.permissions.edit) perms.push('تعديل');
+                if (u.permissions.delete) perms.push('حذف');
+                if (u.permissions.view) perms.push('اطلاع');
+
+                return `
+                    <div class="flex justify-between items-center bg-white p-2 rounded-lg border border-slate-200">
+                        <div>
+                            <div class="font-bold text-xs text-slate-800">${esc(u.name)} (${esc(u.username)})</div>
+                            <div class="text-[10px] text-teal-700">${perms.join(', ')}</div>
+                        </div>
+                        ${u.role !== 'admin' ? `<button onclick="deleteUser(${idx})" class="text-red-600 hover:bg-red-50 p-1 rounded font-bold text-xs">✕</button>` : '<span class="text-[10px] text-slate-400 font-bold">رئيسي</span>'}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // ==================== إدارة الفروع ====================
+        function renderBranchesSettings() {
+            const list = document.getElementById('branchesListSettings');
+            const active = localStorage.getItem(ACTIVE_BRANCH_KEY) || branchList[0];
+            
+            list.innerHTML = branchList.map((b, idx) => `
+                <div class="flex items-center justify-between bg-white p-2 rounded-lg border ${b === active ? 'border-teal-500 bg-teal-50/30' : 'border-slate-200'}">
+                    <label class="flex items-center gap-2 cursor-pointer flex-1">
+                        <input type="radio" name="activeBranchRadio" value="${esc(b)}" ${b === active ? 'checked' : ''} onchange="changeActiveBranch('${esc(b)}')" class="accent-teal-700">
+                        <span class="text-xs font-bold text-slate-800 ${b === active ? 'text-teal-900' : ''}">${esc(b)}</span>
+                    </label>
+                    <div class="flex items-center gap-1">
+                        <button onclick="editBranchName(${idx})" class="text-blue-600 hover:bg-blue-50 p-1 rounded font-bold text-xs" title="تعديل اسم العيادة">✏️</button>
+                        <button onclick="deleteBranch(${idx})" class="text-red-600 hover:bg-red-50 p-1 rounded font-bold text-xs" title="حذف العيادة">🗑️</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function addClinicBranch() {
+            const input = document.getElementById('newClinicBranch');
+            const val = input.value.trim();
+            if (!val) return;
+            if (branchList.includes(val)) return alert('اسم العيادة موجود مسبقاً!');
+            branchList.push(val);
+            localStorage.setItem(BRANCH_KEY, JSON.stringify(branchList));
+            input.value = '';
+            renderBranchesSettings();
+            showToast('تمت إضافة الفرع بنجاح');
+        }
+
+        function editBranchName(idx) {
+            const oldName = branchList[idx];
+            const newName = prompt('أدخل الاسم الجديد للعيادة / الفرع:', oldName);
+            if (!newName || newName.trim() === '' || newName.trim() === oldName) return;
+            
+            const trimmed = newName.trim();
+            if (branchList.includes(trimmed)) return alert('هذا الاسم موجود بالفعل!');
+            
+            branchList[idx] = trimmed;
+            localStorage.setItem(BRANCH_KEY, JSON.stringify(branchList));
+            
+            const currentActive = localStorage.getItem(ACTIVE_BRANCH_KEY) || branchList[0];
+            if (currentActive === oldName) {
+                changeActiveBranch(trimmed);
+            }
+            renderBranchesSettings();
+            showToast('تم تعديل اسم العيادة بنجاح');
+        }
+
+        function deleteBranch(idx) {
+            if (branchList.length <= 1) return alert('يجب الإبقاء على عيادة واحدة على الأقل!');
+            const target = branchList[idx];
+            if (!confirm(`هل أنت متأكد من حذف العيادة: (${target})؟`)) return;
+
+            branchList.splice(idx, 1);
+            localStorage.setItem(BRANCH_KEY, JSON.stringify(branchList));
+
+            const currentActive = localStorage.getItem(ACTIVE_BRANCH_KEY);
+            if (currentActive === target) {
+                changeActiveBranch(branchList[0]);
+            }
+            renderBranchesSettings();
+            showToast('تم حذف الفرع');
+        }
+
+        function changeActiveBranch(val) {
+            localStorage.setItem(ACTIVE_BRANCH_KEY, val);
+            document.getElementById('headerClinicBranch').innerText = val;
+            renderBranchesSettings();
+            showToast(`العيادة النشطة: ${val}`);
+        }
+
+        // ==================== القوائم والإعدادات ====================
+        function toggleSidebar(open) {
+            const drawer = document.getElementById('sideDrawer');
+            const overlay = document.getElementById('sideDrawerOverlay');
+            if (open) {
+                overlay.classList.remove('hidden');
+                drawer.classList.remove('translate-x-full');
+            } else {
+                drawer.classList.add('translate-x-full');
+                overlay.classList.add('hidden');
+            }
+        }
+
+        function loadSettings() {
+            staffList = JSON.parse(localStorage.getItem(STAFF_KEY)) || DEFAULT_STAFF;
+            categoryData = JSON.parse(localStorage.getItem(CATS_KEY)) || { male: DEFAULT_MALE_CATS, female: DEFAULT_FEMALE_CATS };
+            branchList = JSON.parse(localStorage.getItem(BRANCH_KEY)) || DEFAULT_BRANCHES;
+            
+            const activeBranch = localStorage.getItem(ACTIVE_BRANCH_KEY) || branchList[0];
+            document.getElementById('headerClinicBranch').innerText = activeBranch;
+
+            populateStaffDropdowns();
+            renderBranchesSettings();
+            renderStaffSettings();
+            renderCategorySettings();
+            renderUsersSettings();
+        }
+
+        function populateStaffDropdowns() {
+            const formStaff = document.getElementById('staffName');
+            const reportStaff = document.getElementById('staffReportName');
+            
+            const currentSelected = formStaff.value;
+            formStaff.innerHTML = '<option value="" disabled selected>-- اختر المناوب --</option>';
+            staffList.forEach(s => {
+                formStaff.innerHTML += `<option value="${esc(s)}">${esc(s)}</option>`;
+            });
+            if (currentSelected && staffList.includes(currentSelected)) formStaff.value = currentSelected;
+
+            reportStaff.innerHTML = '<option value="ALL">-- جميع المناوبين في الفترة --</option>';
+            staffList.forEach(s => {
+                reportStaff.innerHTML += `<option value="${esc(s)}">${esc(s)}</option>`;
+            });
+        }
+
+        function renderStaffSettings() {
+            const list = document.getElementById('staffListSettings');
+            list.innerHTML = staffList.map((s, idx) => `
+                <div class="flex justify-between items-center bg-white p-2 rounded-lg border border-slate-200">
+                    <span class="font-bold text-xs text-slate-700">${esc(s)}</span>
+                    <button onclick="removeStaff(${idx})" class="text-red-600 hover:bg-red-50 p-1 rounded font-bold text-xs">✕</button>
+                </div>
+            `).join('');
+        }
+
+        function addNewStaff() {
+            const input = document.getElementById('newStaffInput');
+            const val = input.value.trim();
+            if (!val) return;
+            if (staffList.includes(val)) return alert('المناوب موجود بالفعل!');
+            staffList.push(val);
+            localStorage.setItem(STAFF_KEY, JSON.stringify(staffList));
+            input.value = '';
+            populateStaffDropdowns();
+            renderStaffSettings();
+            showToast('تمت إضافة المناوب بنجاح');
+        }
+
+        function removeStaff(idx) {
+            if (!confirm(`هل أنت متأكد من حذف المناوب: ${staffList[idx]}؟`)) return;
+            staffList.splice(idx, 1);
+            localStorage.setItem(STAFF_KEY, JSON.stringify(staffList));
+            populateStaffDropdowns();
+            renderStaffSettings();
+        }
+
+        function renderCategorySettings() {
+            const list = document.getElementById('categoryListSettings');
+            let html = '';
+            categoryData.male.forEach((c, idx) => {
+                html += `
+                    <div class="flex justify-between items-center bg-white p-1.5 rounded-lg border border-slate-200">
+                        <span class="text-xs text-slate-800">👨 ${esc(c)}</span>
+                        <button onclick="removeCategory('male', ${idx})" class="text-red-500 font-bold text-xs">✕</button>
+                    </div>`;
+            });
+            categoryData.female.forEach((c, idx) => {
+                html += `
+                    <div class="flex justify-between items-center bg-white p-1.5 rounded-lg border border-slate-200">
+                        <span class="text-xs text-slate-800">👩 ${esc(c)}</span>
+                        <button onclick="removeCategory('female', ${idx})" class="text-red-500 font-bold text-xs">✕</button>
+                    </div>`;
+            });
+            list.innerHTML = html;
+        }
+
+        function addNewCategory() {
+            const input = document.getElementById('newCategoryInput');
+            const gender = document.getElementById('newCategoryGender').value;
+            const val = input.value.trim();
+            if (!val) return;
+            const target = gender === 'ذكر' ? categoryData.male : categoryData.female;
+            if (target.includes(val)) return alert('التصنيف موجود مسبقاً!');
+            target.push(val);
+            localStorage.setItem(CATS_KEY, JSON.stringify(categoryData));
+            input.value = '';
+            renderCategorySettings();
+            updateCategories();
+            updateCategoryRangePreview();
+            showToast('تمت إضافة التصنيف بنجاح');
+        }
+
+        function removeCategory(type, idx) {
+            if (!confirm('حذف هذا التصنيف؟')) return;
+            categoryData[type].splice(idx, 1);
+            localStorage.setItem(CATS_KEY, JSON.stringify(categoryData));
+            renderCategorySettings();
+            updateCategories();
+            updateCategoryRangePreview();
+        }
+
+        // ==================== المزامنة مع Google Firestore ====================
         const PENDING_KEY = 'clinic_pending_v1', INIT_KEY = 'clinic_initial_push_v1';
         let appLoaded = false, syncState = 'idle', syncError = '', flushing = false, syncing = false;
 
@@ -449,69 +1188,31 @@
         function queueDelete(id) { const p = getPending(); id = String(id); p.up = p.up.filter(x => x !== id); if (!p.del.includes(id)) p.del.push(id); setPending(p); }
         function removePending(kind, id) { const p = getPending(); p[kind] = p[kind].filter(x => x !== String(id)); setPending(p); }
 
-        function fbErrMsg(e) {
-            const c = String((e && e.code) || '');
-            const m = String((e && e.message) || e || '');
-            if (c.includes('permission-denied')) return 'قواعد Firestore ترفض القراءة/الكتابة (permission-denied)';
-            if (c.includes('unavailable') || c === 'timeout') return 'لم تستجب خدمة Firestore خلال المهلة. تحقق من الشبكة أو أوقف VPN/مانع الإعلانات ثم أعد المحاولة';
-            if (c.includes('not-found') || c.includes('failed-precondition')) return 'قاعدة Firestore غير مُنشأة أو غير جاهزة في المشروع';
-            return (c || 'خطأ غير مصنف') + (m ? ': ' + m : '');
-        }
-
-        function rawFbError(e, stage = '') {
-            const code = String((e && e.code) || 'بدون رمز');
-            const message = String((e && e.message) || e || 'بدون رسالة');
-            const name = String((e && e.name) || 'Error');
-            const origin = String(location.origin || '(null)');
-            const protocol = String(location.protocol || '');
-            const href = String(location.href || '');
-            const fbVersion = (window.firebaseClinic && window.firebaseClinic.version) || 'غير معروف';
-            return [
-                stage ? 'المرحلة: ' + stage : '',
-                'code: ' + code,
-                'name: ' + name,
-                'message: ' + message,
-                'Firebase SDK: ' + fbVersion,
-                'protocol: ' + protocol,
-                'origin: ' + origin,
-                'page: ' + href
-            ].filter(Boolean).join('\n');
-        }
-
-        function showFirebaseDiagnostic(details) {
-            const box = document.getElementById('firebaseDiagnostic');
-            const txt = document.getElementById('firebaseDiagnosticText');
-            if (!box || !txt) return;
-            if (details) {
-                txt.textContent = details;
-                box.classList.remove('hidden');
-            } else {
-                txt.textContent = '';
-                box.classList.add('hidden');
-            }
-        }
-
         function updateSyncStatus() {
             const el = document.getElementById('syncStatus'); if (!el) return;
             const p = getPending(); const n = p.up.length + p.del.length;
             let cls, txt;
-            if (syncState === 'syncing') { cls = 'bg-blue-600'; txt = '🔄 جارٍ المزامنة...'; }
+            if (syncState === 'syncing') { cls = 'bg-blue-600'; txt = '🔄 جارية المزامنة...'; }
             else if (syncState === 'error') { cls = 'bg-red-600'; txt = '⚠️ خطأ مزامنة' + (n ? ` (${n})` : ''); }
             else if (n) { cls = 'bg-amber-600'; txt = `⏳ بانتظار الرفع (${n})`; }
             else if (syncState === 'ok') { cls = 'bg-emerald-600'; txt = '☁️ متزامن'; }
             else { cls = 'bg-slate-600'; txt = '☁️ ...'; }
-            el.className = 'px-3 py-2 rounded-lg text-xs font-bold text-white ' + cls;
+            el.className = 'px-3 py-2 rounded-lg text-xs font-bold text-white transition ' + cls;
             el.textContent = txt;
-            el.title = syncError || 'اضغط للمزامنة الآن';
-            if (syncState !== 'error') showFirebaseDiagnostic('');
         }
 
-        function refreshAll() { updateBadge(); updateSerialNumber(); renderRecordsTable(); updateMonthlyPreview(); updateStaffReportPreview(); }
+        function refreshAll() { 
+            updateBadge(); 
+            updateSerialNumber(); 
+            renderRecordsTable(); 
+            updateCategoryRangePreview(); 
+            updateStaffReportPreview(); 
+            renderComprehensiveReportTable(); 
+        }
 
-        // رفع/حذف كل ما هو معلّق في قاعدة Google
         async function flushPending() {
             const fb = window.firebaseClinic;
-            if (!fb || !fb.ready) { syncState = 'error'; syncError = window.firebaseInitError || 'خدمة Google لم تُحمَّل بعد'; updateSyncStatus(); return false; }
+            if (!fb || !fb.ready) { syncState = 'error'; updateSyncStatus(); return false; }
             if (flushing) return false;
             flushing = true;
             try {
@@ -527,29 +1228,23 @@
                 syncState = 'ok'; syncError = '';
                 return true;
             } catch (err) {
-                syncState = 'error'; syncError = fbErrMsg(err);
-                const details = rawFbError(err, 'رفع/حذف السجلات المعلقة إلى Firestore');
-                showFirebaseDiagnostic(details);
-                console.error('Firebase sync error:', err);
+                syncState = 'error';
                 return false;
             } finally { flushing = false; updateSyncStatus(); }
         }
 
-        // سحب بيانات السحابة ودمجها ثم رفع المعلّق
         async function syncNow(manual = false) {
             if (!appLoaded || syncing) return;
             const fb = window.firebaseClinic;
             if (!fb || !fb.ready) {
-                syncState = 'error'; syncError = window.firebaseInitError || 'خدمة Google لم تُحمَّل بعد';
-                const ie = window.firebaseInitErrorRaw || { code: 'firebase-not-ready', message: syncError, name: 'FirebaseInitError' };
-                showFirebaseDiagnostic(rawFbError(ie, 'تهيئة مكتبة Firebase قبل المزامنة'));
-                updateSyncStatus(); if (manual) showToast('⚠️ ' + syncError, true); return;
+                syncState = 'error'; updateSyncStatus();
+                if (manual) showToast('⚠️ خدمة المزامنة غير جاهزة', true);
+                return;
             }
             syncing = true; syncState = 'syncing'; updateSyncStatus();
             try {
                 const cloud = await fb.loadRecords();
                 const cloudIds = new Set(cloud.map(r => String(r.id)));
-                // أول مزامنة: ارفع السجلات المحلية القديمة غير الموجودة في السحابة
                 if (!localStorage.getItem(INIT_KEY)) {
                     records.forEach(r => { if (r && r.id && !cloudIds.has(String(r.id))) queueUpsert(r.id); });
                     localStorage.setItem(INIT_KEY, '1');
@@ -559,7 +1254,7 @@
                 records.forEach(r => { if (r && r.id) map.set(String(r.id), r); });
                 cloud.forEach(r => {
                     const k = String(r.id);
-                    if (pending.del.includes(k) || pending.up.includes(k)) return; // التعديل المحلي المعلّق له الأولوية
+                    if (pending.del.includes(k) || pending.up.includes(k)) return;
                     const l = map.get(k);
                     if (!l || (Number(r.updatedAt) || 0) > (Number(l.updatedAt) || 0)) map.set(k, r);
                 });
@@ -567,58 +1262,60 @@
                 saveToStorage(); refreshAll();
                 syncing = false;
                 const ok = await flushPending();
-                if (manual) showToast(ok ? '✅ تمت المزامنة مع Google' : '⚠️ ' + syncError, !ok);
+                if (manual) showToast(ok ? '✅ تمت المزامنة مع السحابة' : '⚠️ تعذر رفع بعض السجلات', !ok);
             } catch (e) {
-                syncState = 'error'; syncError = fbErrMsg(e);
-                const details = rawFbError(e, 'قراءة بيانات Firestore / بدء المزامنة');
-                showFirebaseDiagnostic(details);
-                console.error('Sync error:', e);
-                updateSyncStatus(); if (manual) showToast('⚠️ ' + syncError, true);
+                syncState = 'error';
+                if (manual) showToast('⚠️ خطأ أثناء المزامنة', true);
             } finally { syncing = false; }
         }
 
-
-        // ==================== التهيئة عند فتح الصفحة ====================
+        // ==================== التهيئة الافتراضية لجميع حقول التواريخ ====================
         window.onload = function() {
+            checkAuth();
+            loadSettings();
             loadRecords();
             setDefaultDates();
             updateCategories();
             updateSerialNumber();
-            updateMonthlyPreview();
-            updateStaffReportPreview();
+            refreshAll();
             appLoaded = true;
             updateSyncStatus();
-            if (window.firebaseClinic || window.firebaseInitError) syncNow();
+            if (window.firebaseClinic) syncNow();
         };
 
         function setDefaultDates() {
             const today = todayLocal();
-            const currentMonth = today.slice(0, 7);
-            document.getElementById('visitDate').value = today;
-            document.getElementById('reportMonth').value = currentMonth;
-            document.getElementById('staffReportDate').value = today;
+            // وضع تاريخ اليوم كقيمة افتراضية لجميع حقول التاريخ في النظام
+            const dateInputs = [
+                'visitDate', 'filterDateInput', 'admitFrom', 'admitTo', 
+                'compStartDate', 'compEndDate', 
+                'catStartDate', 'catEndDate', 
+                'staffStartDate', 'staffEndDate'
+            ];
+            dateInputs.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.value = today;
+            });
         }
 
-        async function loadRecords() {
+        function resetCompDates() {
+            const today = todayLocal();
+            document.getElementById('compStartDate').value = today;
+            document.getElementById('compEndDate').value = today;
+
+            renderComprehensiveReportTable();
+        }
+
+        function loadRecords() {
             const saved = localStorage.getItem(STORAGE_KEY);
             if (saved) {
-                try {
-                    const parsed = JSON.parse(saved);
-                    records = Array.isArray(parsed) ? parsed : [];
-                } catch (e) {
-                    console.error('تعذر قراءة البيانات المحلية:', e);
-                    records = [];
-                }
+                try { records = JSON.parse(saved) || []; } catch (e) { records = []; }
             }
             updateBadge();
         }
 
         function saveToStorage() {
-            try {
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
-            } catch (e) {
-                console.error('تعذر حفظ البيانات محلياً:', e);
-            }
+            try { localStorage.setItem(STORAGE_KEY, JSON.stringify(records)); } catch (e) {}
             updateBadge();
         }
 
@@ -636,11 +1333,9 @@
                 }
             }
             const serials = records.map(r => Number(r.serial) || 0).filter(n => n > 0);
-            const nextNum = serials.length ? Math.max(...serials) + 1 : 1;
-            document.getElementById('serialNumber').value = nextNum;
+            document.getElementById('serialNumber').value = serials.length ? Math.max(...serials) + 1 : 1;
         }
 
-        // ==================== تحديث التصنيفات حسب الجنس ====================
         function updateCategories(selectedCategory = null) {
             const gender = document.querySelector('input[name="gender"]:checked').value;
             const categorySelect = document.getElementById('patientCategory');
@@ -655,29 +1350,37 @@
                 lblMale.className = "cursor-pointer text-center py-2 rounded-lg font-bold text-sm transition text-slate-600 hover:bg-slate-200";
             }
 
-            const list = gender === 'ذكر' ? MALE_CATEGORIES : FEMALE_CATEGORIES;
+            const list = gender === 'ذكر' ? categoryData.male : categoryData.female;
             categorySelect.innerHTML = '';
             list.forEach(cat => {
                 const opt = document.createElement('option');
                 opt.value = cat;
                 opt.innerText = cat;
-                if (selectedCategory && selectedCategory === cat) {
-                    opt.selected = true;
-                }
+                if (selectedCategory && selectedCategory === cat) opt.selected = true;
                 categorySelect.appendChild(opt);
             });
         }
 
-        // ==================== حفظ أو تعديل سجل ====================
+        // ==================== حفظ السجل الطبي ====================
         async function saveRecord(e) {
             e.preventDefault();
+
+            const editId = document.getElementById('editId').value.trim();
+            const isEditing = editId !== '';
+
+            if (isEditing && !hasPerm('edit')) return alert('عفواً، ليس لديك صلاحية تعديل السجلات!');
+            if (!isEditing && !hasPerm('add')) return alert('عفواً، ليس لديك صلاحية إضافة سجلات جديدة!');
+
+            const confirmMsg = isEditing 
+                ? 'هل أنت متأكد من حفظ التعديلات على هذا السجل؟' 
+                : 'هل أنت متأكد من حفظ بيانات المريض في السجل الطبي؟';
+            if (!confirm(confirmMsg)) return;
+
             try {
-                const editId = document.getElementById('editId').value.trim();
                 const genderElement = document.querySelector('input[name="gender"]:checked');
-                if (!genderElement) { showToast('يرجى اختيار جنس المريض'); return; }
                 const patientName = document.getElementById('patientName').value.trim();
-                if (!patientName) { showToast('يرجى إدخال اسم المريض'); document.getElementById('patientName').focus(); return; }
-                const isEditing = editId !== '';
+                const branch = localStorage.getItem(ACTIVE_BRANCH_KEY) || 'المركز الرئيسي';
+
                 const recordId = isEditing ? Number(editId) : Date.now();
                 let serialNumber;
                 if (isEditing) {
@@ -687,14 +1390,19 @@
                     const serials = records.map(r => Number(r.serial) || 0).filter(n => n > 0);
                     serialNumber = serials.length ? Math.max(...serials) + 1 : 1;
                 }
+
                 const recordData = {
-                    id: recordId, serial: serialNumber,
+                    id: recordId,
+                    serial: serialNumber,
+                    branch: branch,
                     date: document.getElementById('visitDate').value,
                     period: document.getElementById('shiftPeriod').value,
                     staff: document.getElementById('staffName').value,
-                    patientName: patientName, gender: genderElement.value,
+                    patientName: patientName,
+                    gender: genderElement.value,
                     category: document.getElementById('patientCategory').value,
                     examined: document.getElementById('isExamined').checked ? 'معاينة' : 'غير معاين',
+                    diagnosis: document.getElementById('diagnosis').value.trim(),
                     treatment: document.getElementById('pharmacyTreatment').value.trim(),
                     labTests: document.getElementById('labTests').value.trim(),
                     admitFrom: document.getElementById('admitFrom').value,
@@ -702,41 +1410,39 @@
                     transferTo: document.getElementById('transferTo').value.trim(),
                     transferReason: document.getElementById('transferReason').value.trim(),
                     notes: document.getElementById('notes').value.trim(),
+                    recordedBy: currentUser ? currentUser.username : 'unknown',
                     updatedAt: Date.now()
                 };
+
                 if (isEditing) {
                     const index = records.findIndex(r => Number(r.id) === recordId);
-                    if (index === -1) { showToast('لم يتم العثور على السجل المطلوب تعديله'); return; }
+                    if (index === -1) return alert('السجل غير موجود');
                     records[index] = recordData;
                     showToast('تم تحديث بيانات السجل بنجاح');
                 } else {
                     records.push(recordData);
-                    showToast('تم حفظ حالة المريض بنجاح — رقم السجل: ' + serialNumber);
+                    showToast('تم حفظ حالة المريض — رقم السجل: ' + serialNumber);
                 }
+
                 queueUpsert(recordId);
                 saveToStorage();
-                document.getElementById('editId').value = '';
-                document.getElementById('saveBtn').innerHTML = '<span>💾 حفظ بيانات المريض في السجل</span>';
-                document.getElementById('cancelEditBtn').classList.add('hidden');
-                clearPatientFieldsOnly();
-                updateSerialNumber();
-                renderRecordsTable();
-                updateMonthlyPreview();
-                updateStaffReportPreview();
-                const ok = await flushPending();
-                if (ok) showToast(isEditing ? 'تم تحديث السجل وحفظه في Google ✔' : 'تم الحفظ في Google ✔ — رقم السجل: ' + serialNumber);
-                else showToast('⚠️ حُفظ محلياً فقط — ' + (syncError || 'سيُرحَّل تلقائياً عند توفر الاتصال'), true);
-            } catch (error) { console.error('saveRecord error:', error); showToast('حدث خطأ أثناء حفظ بيانات المريض'); }
+                resetFormFull();
+                refreshAll();
+                flushPending();
+            } catch (error) {
+                console.error(error);
+                showToast('حدث خطأ أثناء الحفظ', true);
+            }
         }
 
-        // تفريغ حقول المريض فقط مع إبقاء بيانات النوبة والمناوب
         function clearPatientFieldsOnly() {
             document.getElementById('patientName').value = '';
             document.getElementById('isExamined').checked = true;
+            document.getElementById('diagnosis').value = '';
             document.getElementById('pharmacyTreatment').value = '';
             document.getElementById('labTests').value = '';
-            document.getElementById('admitFrom').value = '';
-            document.getElementById('admitTo').value = '';
+            document.getElementById('admitFrom').value = todayLocal();
+            document.getElementById('admitTo').value = todayLocal();
             document.getElementById('transferTo').value = '';
             document.getElementById('transferReason').value = '';
             document.getElementById('notes').value = '';
@@ -751,9 +1457,16 @@
             updateSerialNumber();
         }
 
-        // ==================== عرض السجل العام والبحث ====================
+        // ==================== عرض السجل العام ====================
         function renderRecordsTable() {
             const tbody = document.getElementById('recordsTableBody');
+            if (!tbody) return;
+            
+            if (!hasPerm('view')) {
+                tbody.innerHTML = `<tr><td colspan="15" class="text-center py-8 text-amber-700 font-bold bg-amber-50">🔒 عذراً، ليس لديك صلاحية الاطلاع على السجل العام</td></tr>`;
+                return;
+            }
+
             const search = document.getElementById('searchInput').value.trim().toLowerCase();
             const filterDate = document.getElementById('filterDateInput').value;
 
@@ -762,18 +1475,21 @@
                     String(r.patientName || '').toLowerCase().includes(search) ||
                     String(r.staff || '').toLowerCase().includes(search) ||
                     String(r.category || '').toLowerCase().includes(search) ||
+                    String(r.diagnosis || '').toLowerCase().includes(search) ||
                     String(r.serial).includes(search);
                 const matchDate = !filterDate || r.date === filterDate;
                 return matchSearch && matchDate;
             });
 
-            // ترتيب من الأحدث للأقدم
             filtered.sort((a, b) => b.serial - a.serial);
 
             if (filtered.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="14" class="text-center py-8 text-slate-400 font-bold">لا توجد سجلات مطابقة للبحث</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="15" class="text-center py-8 text-slate-400 font-bold">لا توجد سجلات مطابقة للبحث</td></tr>`;
                 return;
             }
+
+            const canEdit = hasPerm('edit');
+            const canDelete = hasPerm('delete');
 
             tbody.innerHTML = filtered.map(raw => {
                 const r = {...raw};
@@ -789,16 +1505,17 @@
                         <td class="p-3 whitespace-nowrap font-medium">${r.staff}</td>
                         <td class="p-3 font-bold text-slate-900 whitespace-nowrap">${r.patientName}</td>
                         <td class="p-3">${r.gender}</td>
-                        <td class="p-3 whitespace-nowrap"><span class="bg-teal-50 text-teal-800 px-2.5 py-1 rounded-lg text-xs font-bold border border-teal-200">${r.category}</span></td>
+                        <td class="p-3 whitespace-nowrap"><span class="bg-teal-50 text-teal-800 px-2 py-0.5 rounded text-xs font-bold border border-teal-200">${r.category}</span></td>
                         <td class="p-3">${r.examined}</td>
+                        <td class="p-3 max-w-xs font-semibold text-teal-900 truncate" title="${r.diagnosis}">${r.diagnosis || '-'}</td>
                         <td class="p-3 max-w-xs truncate" title="${r.treatment}">${r.treatment || '-'}</td>
                         <td class="p-3 max-w-xs truncate" title="${r.labTests}">${r.labTests || '-'}</td>
                         <td class="p-3 text-xs whitespace-nowrap">${admitInfo}</td>
                         <td class="p-3 text-xs">${transferInfo}</td>
                         <td class="p-3 max-w-xs truncate" title="${r.notes}">${r.notes || '-'}</td>
-                        <td class="p-3 whitespace-nowrap text-center">
-                            <button onclick="editRecord(${r.id})" class="text-blue-600 hover:bg-blue-50 p-1.5 rounded-lg font-bold text-xs" title="تعديل">✏️</button>
-                            <button onclick="deleteRecord(${r.id})" class="text-red-600 hover:bg-red-50 p-1.5 rounded-lg font-bold text-xs" title="حذف">🗑️</button>
+                        <td class="p-3 whitespace-nowrap text-center space-x-1 space-x-reverse">
+                            ${canEdit ? `<button onclick="editRecord(${r.id})" class="text-blue-600 hover:bg-blue-50 p-1.5 rounded-lg font-bold text-xs" title="تعديل">✏️</button>` : ''}
+                            ${canDelete ? `<button onclick="deleteRecord(${r.id})" class="text-red-600 hover:bg-red-50 p-1.5 rounded-lg font-bold text-xs" title="حذف">🗑️</button>` : ''}
                         </td>
                     </tr>
                 `;
@@ -806,6 +1523,7 @@
         }
 
         function editRecord(id) {
+            if (!hasPerm('edit')) return alert('عفواً، ليس لديك صلاحية تعديل السجلات!');
             const rec = records.find(r => r.id === id);
             if (!rec) return;
 
@@ -822,13 +1540,14 @@
             updateCategories(rec.category);
 
             document.getElementById('isExamined').checked = (rec.examined === 'معاينة');
-            document.getElementById('pharmacyTreatment').value = rec.treatment;
-            document.getElementById('labTests').value = rec.labTests;
-            document.getElementById('admitFrom').value = rec.admitFrom;
-            document.getElementById('admitTo').value = rec.admitTo;
-            document.getElementById('transferTo').value = rec.transferTo;
-            document.getElementById('transferReason').value = rec.transferReason;
-            document.getElementById('notes').value = rec.notes;
+            document.getElementById('diagnosis').value = rec.diagnosis || '';
+            document.getElementById('pharmacyTreatment').value = rec.treatment || '';
+            document.getElementById('labTests').value = rec.labTests || '';
+            document.getElementById('admitFrom').value = rec.admitFrom || '';
+            document.getElementById('admitTo').value = rec.admitTo || '';
+            document.getElementById('transferTo').value = rec.transferTo || '';
+            document.getElementById('transferReason').value = rec.transferReason || '';
+            document.getElementById('notes').value = rec.notes || '';
 
             document.getElementById('saveBtn').innerHTML = '<span>🔄 حفظ التعديلات</span>';
             document.getElementById('cancelEditBtn').classList.remove('hidden');
@@ -836,28 +1555,168 @@
         }
 
         async function deleteRecord(id) {
-            if (!confirm('هل أنت متأكد من حذف هذا السجل؟')) return;
+            if (!hasPerm('delete')) return alert('عفواً، ليس لديك صلاحية حذف السجلات!');
+            if (!confirm('هل أنت متأكد من حذف هذا السجل نهائياً؟')) return;
             records = records.filter(r => Number(r.id) !== Number(id));
             queueDelete(id);
-            saveToStorage(); updateSerialNumber(); renderRecordsTable(); updateMonthlyPreview(); updateStaffReportPreview();
-            showToast('تم حذف السجل');
-            const ok = await flushPending();
-            if (!ok) showToast('تم الحذف محلياً — سيُحذف من Google عند نجاح المزامنة', true);
+            saveToStorage(); 
+            refreshAll();
+            showToast('تم حذف السجل بنجاح');
+            flushPending();
         }
 
-        // ==================== التقارير والمعاينة وتصدير الإكسل ====================
+        // ==================== 1. التقرير الموسع والشامل (نطاق زمني من - إلى) ====================
+        function getReportPeriodDates(period) {
+            const today = new Date(todayLocal() + 'T12:00:00');
+            const year = today.getFullYear();
+            const month = today.getMonth();
+            const format = date => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+            if (period === 'month') return [format(new Date(year, month, 1)), format(new Date(year, month + 1, 0))];
+            if (period === 'previous') return [format(new Date(year, month - 1, 1)), format(new Date(year, month, 0))];
+            return [format(today), format(today)];
+        }
 
-        // 1. معاينة التقرير الشهري للتصنيفات
-        function updateMonthlyPreview() {
-            const monthVal = document.getElementById('reportMonth').value; // YYYY-MM
+        function setReportPeriod(prefix, period) {
+            const [start, end] = getReportPeriodDates(period);
+            document.getElementById(prefix + 'StartDate').value = start;
+            document.getElementById(prefix + 'EndDate').value = end;
+            if (prefix === 'comp') {
+                document.getElementById('compFilterMode').value = 'date';
+                updateComprehensiveFilterMode();
+            } else if (prefix === 'cat') updateCategoryRangePreview();
+            else updateStaffReportPreview();
+        }
+
+        function updatePeriodOptions(prefix) {
+            const start = document.getElementById(prefix + 'StartDate').value;
+            const end = document.getElementById(prefix + 'EndDate').value;
+            const dateMode = prefix !== 'comp' || document.getElementById('compFilterMode').value === 'date';
+            document.querySelectorAll(`[data-period-prefix="${prefix}"]`).forEach(button => {
+                const [expectedStart, expectedEnd] = getReportPeriodDates(button.dataset.period);
+                button.setAttribute('aria-pressed', String(dateMode && start === expectedStart && end === expectedEnd));
+            });
+        }
+
+        function updateComprehensiveFilterMode() {
+            const mode = document.getElementById('compFilterMode').value;
+            document.querySelectorAll('[data-comp-filter]').forEach(el => {
+                const active = el.dataset.compFilter === mode;
+                el.classList.toggle('hidden', !active);
+                el.querySelectorAll('input').forEach(input => { input.disabled = !active; });
+            });
+            renderComprehensiveReportTable();
+        }
+
+        function getFilteredComprehensiveList() {
+            const mode = document.getElementById('compFilterMode')?.value || 'date';
+            const startDate = mode === 'date' ? (document.getElementById('compStartDate')?.value || '') : '';
+            const endDate = mode === 'date' ? (document.getElementById('compEndDate')?.value || '') : '';
+
+
+            let list = records.filter(r => {
+                const dateOk = (!startDate || r.date >= startDate) && (!endDate || r.date <= endDate);
+                return dateOk;
+            });
+
+            if (mode === 'name') {
+                const alphabet = new Intl.Collator('ar', { sensitivity: 'base', numeric: true });
+                return list.sort((a, b) => alphabet.compare(String(a.patientName || ''), String(b.patientName || '')) || b.serial - a.serial);
+            }
+            return list.sort((a, b) => b.serial - a.serial);
+        }
+
+        function renderComprehensiveReportTable() {
+            const tbody = document.getElementById('compTableBody');
+            if (!tbody) return;
+
+            const list = getFilteredComprehensiveList();
+            document.getElementById('compSummaryTotal').textContent = list.length;
+            updatePeriodOptions('comp');
+
+            if (list.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="16" class="text-center py-6 text-slate-400 font-bold">لا توجد حالات مطابقة للفلتر المحدد</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = list.map(raw => {
+                const r = {...raw};
+                for (const k in r) if (typeof r[k] === 'string') r[k] = esc(r[k]);
+                const admit = (r.admitFrom || r.admitTo) ? `${r.admitFrom || '-'} إلى ${r.admitTo || '-'}` : '-';
+                const transfer = (r.transferTo || r.transferReason) ? `${r.transferTo || '-'} (${r.transferReason || '-'})` : '-';
+
+                return `
+                    <tr class="hover:bg-slate-50 transition border-b border-slate-100">
+                        <td class="p-2 font-bold text-teal-800 border-l border-slate-200">${r.serial}</td>
+                        <td class="p-2 border-l border-slate-200">${r.branch || 'الرئيسي'}</td>
+                        <td class="p-2 border-l border-slate-200"><span class="report-date" dir="ltr">${r.date || '-'}</span></td>
+                        <td class="p-2 border-l border-slate-200">${r.period}</td>
+                        <td class="p-2 border-l border-slate-200">${r.staff}</td>
+                        <td class="p-2 font-bold text-slate-900 border-l border-slate-200">${r.patientName}</td>
+                        <td class="p-2 border-l border-slate-200">${r.gender}</td>
+                        <td class="p-2 border-l border-slate-200"><span class="bg-teal-50 text-teal-800 px-1.5 py-0.5 rounded text-[11px] font-bold border border-teal-200">${r.category}</span></td>
+                        <td class="p-2 border-l border-slate-200">${r.examined}</td>
+                        <td class="p-2 font-medium text-teal-950 border-l border-slate-200 max-w-xs truncate" title="${r.diagnosis}">${r.diagnosis || '-'}</td>
+                        <td class="p-2 border-l border-slate-200 max-w-xs truncate" title="${r.treatment}">${r.treatment || '-'}</td>
+                        <td class="p-2 border-l border-slate-200 max-w-xs truncate" title="${r.labTests}">${r.labTests || '-'}</td>
+                        <td class="p-2 border-l border-slate-200">${admit}</td>
+                        <td class="p-2 border-l border-slate-200 max-w-xs truncate" title="${transfer}">${transfer}</td>
+                        <td class="p-2 border-l border-slate-200 max-w-xs truncate" title="${r.notes}">${r.notes || '-'}</td>
+                        <td class="p-2 text-slate-500">${r.recordedBy || '-'}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function exportComprehensiveExcel() {
+            const list = getFilteredComprehensiveList();
+            if (list.length === 0) return alert('لا توجد بيانات مطابقة للفترة المحددة لتصديرها!');
+
+            const data = list.map(r => ({
+                "رقم السجل": r.serial,
+                "الفرع / العيادة": r.branch || 'المركز الرئيسي',
+                "التاريخ": r.date,
+                "الفترة": r.period,
+                "المناوب": r.staff,
+                "اسم المريض": r.patientName,
+                "النوع": r.gender,
+                "التصنيف": r.category,
+                "المعاينة": r.examined,
+                "التشخيص الطبي": r.diagnosis || '-',
+                "العلاج المصروف من الصيدلية": r.treatment || '-',
+                "الفحوصات المطلوبة من المختبر": r.labTests || '-',
+                "ترقيد من": r.admitFrom || '-',
+                "ترقيد إلى": r.admitTo || '-',
+                "جهة التحويل": r.transferTo || '-',
+                "سبب التحويل": r.transferReason || '-',
+                "الملاحظات": r.notes || '-',
+                "مدخل البيانات": r.recordedBy || '-'
+            }));
+
+            const sDate = document.getElementById('compStartDate')?.value || 'البداية';
+            const eDate = document.getElementById('compEndDate')?.value || 'النهاية';
+            const fileName = document.getElementById('compFilterMode').value === 'name'
+                ? 'تقرير_الحالات_مرتبة_حسب_الاسم.xlsx'
+                : `تقرير_الحالات_${sDate}_إلى_${eDate}.xlsx`;
+            exportToExcelFile(data, fileName, "الحالات المسجلة");
+        }
+
+        // ==================== 2. تقرير إحصائية التصنيفات (نطاق زمني من - إلى) ====================
+        function getCategoryRangeRecords() {
+            const sDate = document.getElementById('catStartDate')?.value || '';
+            const eDate = document.getElementById('catEndDate')?.value || '';
+            return records.filter(r => (!sDate || r.date >= sDate) && (!eDate || r.date <= eDate));
+        }
+
+        function updateCategoryRangePreview() {
+            const rangeRecords = getCategoryRangeRecords();
             const previewContainer = document.getElementById('categoryPreviewList');
-            const monthRecords = records.filter(r => r.date && r.date.startsWith(monthVal));
+            document.getElementById('catRangeTotalCount').innerText = rangeRecords.length;
+            updatePeriodOptions('cat');
 
-            document.getElementById('monthTotalCount').innerText = `الإجمالي: ${monthRecords.length}`;
-
+            const allCats = [...categoryData.male, ...categoryData.female];
             let html = '';
-            ALL_CATEGORIES.forEach(cat => {
-                const count = monthRecords.filter(r => r.category === cat).length;
+            allCats.forEach(cat => {
+                const count = rangeRecords.filter(r => r.category === cat).length;
                 html += `
                     <div class="flex justify-between items-center py-1 px-2 rounded hover:bg-slate-100">
                         <span class="text-slate-700 font-medium">${cat}</span>
@@ -868,162 +1727,237 @@
             previewContainer.innerHTML = html;
         }
 
-        // تصدير إحصائية التصنيفات لشهر معين إلى Excel
         function exportCategoryReportExcel() {
-            const monthVal = document.getElementById('reportMonth').value;
-            if (!monthVal) return alert('يرجى تحديد الشهر أولاً');
+            const rangeRecords = getCategoryRangeRecords();
+            if (rangeRecords.length === 0) return alert('لا توجد بيانات مسجلة في هذه الفترة!');
+            const allCats = [...categoryData.male, ...categoryData.female];
 
-            const monthRecords = records.filter(r => r.date && r.date.startsWith(monthVal));
-
-            const dataForExcel = ALL_CATEGORIES.map((cat, idx) => {
-                const isMale = MALE_CATEGORIES.includes(cat);
-                const count = monthRecords.filter(r => r.category === cat).length;
-                return {
-                    "م": idx + 1,
-                    "تصنيف المريض": cat,
-                    "النوع": isMale ? "ذكر" : "أنثى",
-                    "عدد الواردين في الشهر": count
-                };
-            });
-
-            // إضافة صف المجموع الكلي
-            dataForExcel.push({
-                "م": "",
-                "تصنيف المريض": "الإجمالي الكلي للواردين",
-                "النوع": "-",
-                "عدد الواردين في الشهر": monthRecords.length
-            });
-
-            exportToExcelFile(dataForExcel, `إحصائية_تصنيفات_الواردين_${monthVal}.xlsx`, "إحصائية التصنيفات");
-        }
-
-        // 2. تصدير السجل الكامل لشهر معين إلى Excel
-        function exportFullMonthExcel() {
-            const monthVal = document.getElementById('reportMonth').value;
-            if (!monthVal) return alert('يرجى تحديد الشهر أولاً');
-
-            const monthRecords = records.filter(r => r.date && r.date.startsWith(monthVal));
-            if (monthRecords.length === 0) {
-                return alert('لا توجد أي سجلات مدخلة في هذا الشهر لتصديرها!');
-            }
-
-            // ترتيب تصاعدي حسب الرقم التسلسلي
-            monthRecords.sort((a, b) => a.serial - b.serial);
-
-            const dataForExcel = monthRecords.map(r => ({
-                "الرقم": r.serial,
-                "التاريخ": r.date,
-                "الفترة": r.period,
-                "المناوب": r.staff,
-                "اسم المريض": r.patientName,
-                "النوع": r.gender,
-                "التصنيف": r.category,
-                "المعاينة": r.examined,
-                "العلاج المصروف من الصيدلية": r.treatment,
-                "الفحوصات المطلوبة من المختبر": r.labTests,
-                "ترقيد من تاريخ": r.admitFrom,
-                "ترقيد إلى تاريخ": r.admitTo,
-                "جهة التحويل": r.transferTo,
-                "سبب التحويل": r.transferReason,
-                "ملاحظات": r.notes
+            const dataForExcel = allCats.map((cat, idx) => ({
+                "م": idx + 1,
+                "تصنيف المريض": cat,
+                "النوع": categoryData.male.includes(cat) ? "ذكر" : "أنثى",
+                "عدد الواردين في الفترة": rangeRecords.filter(r => r.category === cat).length
             }));
 
-            exportToExcelFile(dataForExcel, `سجل_العيادة_الكامل_${monthVal}.xlsx`, "السجل الكامل");
+            dataForExcel.push({
+                "م": "",
+                "تصنيف المريض": "الإجمالي الكلي",
+                "النوع": "-",
+                "عدد الواردين في الفترة": rangeRecords.length
+            });
+
+            const sDate = document.getElementById('catStartDate')?.value || 'البداية';
+            const eDate = document.getElementById('catEndDate')?.value || 'النهاية';
+            exportToExcelFile(dataForExcel, `إحصائية_التصنيفات_${sDate}_إلى_${eDate}.xlsx`, "التصنيفات");
         }
 
-        // 3. معاينة وتصدير تقرير المناوبين في تاريخ معين
+        // ==================== 3. تقرير المناوبين (نطاق زمني من - إلى) ====================
+        function getStaffRangeRecords() {
+            const sDate = document.getElementById('staffStartDate')?.value || '';
+            const eDate = document.getElementById('staffEndDate')?.value || '';
+            const staffVal = document.getElementById('staffReportName')?.value || 'ALL';
+
+            return records.filter(r => {
+                const dateOk = (!sDate || r.date >= sDate) && (!eDate || r.date <= eDate);
+                const staffOk = (staffVal === 'ALL' || r.staff === staffVal);
+                return dateOk && staffOk;
+            });
+        }
+
         function updateStaffReportPreview() {
-            const dateVal = document.getElementById('staffReportDate').value;
-            const staffVal = document.getElementById('staffReportName').value;
+            const staffRecords = getStaffRangeRecords();
             const container = document.getElementById('staffReportResult');
+            document.getElementById('staffSummaryTotal').textContent = staffRecords.length;
+            updatePeriodOptions('staff');
 
-            const dayRecords = records.filter(r => r.date === dateVal && (staffVal === 'ALL' || r.staff === staffVal));
-
-            if (dayRecords.length === 0) {
-                container.innerHTML = `<div class="text-center py-6 text-slate-400 font-bold">لا توجد حالات مسجلة في هذا التاريخ (${dateVal}) حسب الفلتر المختار.</div>`;
+            if (staffRecords.length === 0) {
+                container.innerHTML = `<div class="text-center py-6 text-slate-400 font-bold">لا توجد حالات مطابقة للفلتر المحدد.</div>`;
                 return;
             }
 
-            // تجميع حسب المناوب والفترة
             const summaryMap = {};
-            dayRecords.forEach(r => {
-                const key = `${r.staff} || ${r.period}`;
-                if (!summaryMap[key]) {
-                    summaryMap[key] = { staff: r.staff, period: r.period, count: 0 };
-                }
+            staffRecords.forEach(r => {
+                const key = `${r.staff}`;
+                if (!summaryMap[key]) summaryMap[key] = { staff: r.staff, count: 0 };
                 summaryMap[key].count++;
             });
 
-            let html = `
-                <div class="bg-blue-50 border border-blue-200 text-blue-900 p-3 rounded-lg font-bold flex justify-between items-center mb-2">
-                    <span>إجمالي الحالات المسجلة بتاريخ (${dateVal}):</span>
-                    <span class="text-lg bg-blue-700 text-white px-3 py-0.5 rounded-full">${dayRecords.length} حالة</span>
-                </div>
-            `;
+            let html = '';
 
             Object.values(summaryMap).forEach(item => {
                 html += `
                     <div class="flex justify-between items-center bg-white p-2.5 rounded-lg border border-slate-200">
-                        <div>
-                            <div class="font-bold text-slate-800">${esc(item.staff)}</div>
-                            <div class="text-xs text-slate-500">الفترة: ${item.period}</div>
-                        </div>
+                        <div class="font-bold text-slate-800">${esc(item.staff)}</div>
                         <span class="bg-emerald-100 text-emerald-800 font-bold px-3 py-1 rounded-lg text-sm">
-                            سجل ${item.count} واردين
+                            سجل ${item.count} حالة
                         </span>
                     </div>
                 `;
             });
-
             container.innerHTML = html;
         }
 
         function exportStaffReportExcel() {
-            const dateVal = document.getElementById('staffReportDate').value;
-            const staffVal = document.getElementById('staffReportName').value;
+            const staffRecords = getStaffRangeRecords();
+            if (staffRecords.length === 0) return alert('لا توجد بيانات مطابقة لتصديرها!');
 
-            const dayRecords = records.filter(r => r.date === dateVal && (staffVal === 'ALL' || r.staff === staffVal));
-            if (dayRecords.length === 0) {
-                return alert('لا توجد بيانات في هذا التاريخ لتصديرها!');
-            }
-
-            // ورقة ملخص المناوبين + قائمة الحالات التي سجلوها
-            const dataForExcel = dayRecords.map((r, index) => ({
+            const dataForExcel = staffRecords.map((r, index) => ({
                 "م": index + 1,
                 "التاريخ": r.date,
-                "اسم المناوب": r.staff,
+                "المناوب": r.staff,
                 "الفترة": r.period,
                 "رقم السجل": r.serial,
                 "اسم المريض": r.patientName,
                 "النوع": r.gender,
                 "التصنيف": r.category,
+                "التشخيص": r.diagnosis || '-',
                 "المعاينة": r.examined
             }));
 
-            exportToExcelFile(dataForExcel, `تقرير_المناوبين_${dateVal}.xlsx`, "إنتاجية المناوب");
+            const sDate = document.getElementById('staffStartDate')?.value || 'البداية';
+            const eDate = document.getElementById('staffEndDate')?.value || 'النهاية';
+            exportToExcelFile(dataForExcel, `تقرير_المناوبين_${sDate}_إلى_${eDate}.xlsx`, "المناوبين");
         }
 
-        // دالة مساعدة لتوليد ملف Excel
+        // ==================== دوال الطباعة ومشاركة PDF المعزولة ====================
+        function printSpecificReport(type) {
+            shareSpecificReportPDF(type);
+        }
+
+        function getReportPrintDetails(type) {
+            let title = 'تقرير الحالات المسجلة';
+            let prefix = 'comp';
+            let contentId = 'compTableBody';
+            let orientation = 'landscape';
+            if (type === 'categories') {
+                title = 'إحصائيات التصنيفات';
+                prefix = 'cat';
+                contentId = 'categoryPreviewList';
+                orientation = 'portrait';
+            } else if (type === 'staff') {
+                title = 'تقرير المناوبين وعدد المسجلين';
+                prefix = 'staff';
+                contentId = 'staffReportResult';
+                orientation = 'portrait';
+            }
+            const startDate = document.getElementById(prefix + 'StartDate')?.value || '';
+            const endDate = document.getElementById(prefix + 'EndDate')?.value || '';
+            let period = `من تاريخ <span dir="ltr">${esc(startDate || 'البداية')}</span> إلى تاريخ <span dir="ltr">${esc(endDate || 'النهاية')}</span>`;
+            if (type === 'comprehensive' && document.getElementById('compFilterMode')?.value === 'name') {
+                period = 'جميع الحالات — مرتبة أبجديًا حسب اسم المريض';
+            }
+            const content = document.getElementById(contentId);
+            if (!content) return null;
+            // Copy only report results, without duplicating the screen heading or filters.
+            const container = type === 'comprehensive' ? content.closest('table') : content.parentElement;
+            const printable = container.cloneNode(true);
+            printable.querySelectorAll('.report-summary').forEach(summary => summary.remove());
+            const total = type === 'categories' ? getCategoryRangeRecords().length
+                : type === 'staff' ? getStaffRangeRecords().length : getFilteredComprehensiveList().length;
+            return { title, period, orientation, total, content: printable.outerHTML };
+        }
+
+        function shareSpecificReportPDF(type) {
+            const report = getReportPrintDetails(type);
+            if (!report) return;
+            const branch = esc(localStorage.getItem(ACTIVE_BRANCH_KEY) || 'المركز الرئيسي');
+            const extractionDate = todayLocal();
+            const win = window.open('', '_blank');
+            if (!win) {
+                showToast('يرجى السماح بفتح نافذة التقرير للطباعة', true);
+                return;
+            }
+            win.document.write(`
+                <!DOCTYPE html>
+                <html lang="ar" dir="rtl">
+                <head>
+                    <meta charset="UTF-8">
+                    <title>${report.title}</title>
+                    <style>
+                        @page {
+                            size: A4 ${report.orientation};
+                            margin: 5mm 5mm 10mm;
+                            @bottom-left {
+                                content: "تاريخ الاستخراج: ${extractionDate}";
+                                font-family: Tahoma, Arial, sans-serif;
+                                font-size: 10px;
+                                direction: rtl;
+                                text-align: left;
+                                vertical-align: middle;
+                                color: #475569;
+                            }
+                            @bottom-right {
+                                content: "صفحة " counter(page) " من " counter(pages);
+                                font-family: Tahoma, Arial, sans-serif;
+                                font-size: 10px;
+                                direction: rtl;
+                                text-align: right;
+                                vertical-align: middle;
+                                color: #475569;
+                            }
+                        }
+                        * { box-sizing: border-box; }
+                        body { font-family: Tahoma, Arial, sans-serif; padding: 0; margin: 0; direction: rtl; color: #1e293b; font-size: 12px; }
+                        body { line-height: 1.7; }
+                        .report-summary { display: flex; justify-content: space-between; align-items: center; gap: 12px; border: 1px solid #99d5cc; border-radius: 8px; padding: 8px 12px; margin-bottom: 12px; background: #f0fdfa; color: #115e59; font-size: 13px; font-weight: bold; break-inside: avoid; break-after: avoid; }
+                        .report-summary-count { font-size: 22px; line-height: 1.3; }
+                        .report-heading { text-align: center; margin-bottom: 12px; break-inside: avoid; break-after: avoid; }
+                        .report-basmala { font-size: 18px; font-weight: bold; margin-bottom: 8px; }
+                        h2 { font-size: 16px; margin: 0 0 6px; }
+                        h3 { font-size: 14px; margin: 0 0 6px; }
+                        .report-period { font-size: 12px; }
+                        .report-box { border: 1px solid #94a3b8; border-radius: 8px; padding: 8px; }
+                        .report-box div { max-height: none !important; overflow: visible !important; }
+                        .no-print { display: none !important; }
+                        table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 9px; }
+                        th, td { border: 1px solid #94a3b8; padding: 4px 3px; white-space: normal !important; overflow-wrap: anywhere; vertical-align: top; text-align: right; }
+                        th { background-color: #f1f5f9; font-weight: bold; }
+                        .truncate, .whitespace-nowrap { white-space: normal !important; overflow: visible !important; text-overflow: clip !important; max-width: none !important; }
+                        .report-date, [dir="ltr"] { direction: ltr; unicode-bidi: isolate; }
+                        thead { display: table-header-group; }
+                        tr { break-inside: avoid; }
+                        .flex { display: flex; gap: 8px; }
+                        .justify-between { justify-content: space-between; }
+                        .items-center { align-items: center; }
+                        .font-bold { font-weight: bold; }
+                        #categoryPreviewList > div, #staffReportResult > div { border: 1px solid #cbd5e1; border-radius: 6px; padding: 8px; margin-top: 6px; break-inside: avoid; }
+                        @media screen { body { padding: 16px; max-width: ${report.orientation === 'portrait' ? '210mm' : '297mm'}; margin: auto; } }
+                    </style>
+                </head>
+                <body>
+                    <header class="report-heading">
+                        <div class="report-basmala">بسم الله الرحمن الرحيم</div>
+                        <h2>سجل الواردين إلى العيادة (${branch})</h2>
+                        <h3>${report.title}</h3>
+                        <div class="report-period">${report.period}</div>
+                    </header>
+                    <div class="report-summary"><span>إجمالي المسجلين</span><span class="report-summary-count">${report.total}</span></div>
+                    <div class="report-box">${report.content}</div>
+                    <script>
+                        window.onload = function() { window.print(); };
+                    <\/script>
+                </body>
+                </html>
+            `);
+            win.document.close();
+        }
+
         function exportToExcelFile(jsonData, fileName, sheetName) {
             const worksheet = XLSX.utils.json_to_sheet(jsonData);
             const workbook = XLSX.utils.book_new();
-            
-            // ضبط اتجاه الورقة من اليمين لليسار (RTL)
             if(!workbook.Workbook) workbook.Workbook = {};
             if(!workbook.Workbook.Views) workbook.Workbook.Views = [];
             workbook.Workbook.Views[0] = { RTL: true };
-
             XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
             XLSX.writeFile(workbook, fileName);
         }
 
-        // ==================== النسخ الاحتياطي والتنقل ====================
+        // ==================== النسخ الاحتياطي ====================
         function downloadBackup() {
             const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(records, null, 2));
             const dlAnchor = document.createElement('a');
-            const today = todayLocal();
             dlAnchor.setAttribute("href", dataStr);
-            dlAnchor.setAttribute("download", `نسخة_احتياطية_سجل_العيادة_${today}.json`);
+            dlAnchor.setAttribute("download", `نسخة_سجل_العيادة_${todayLocal()}.json`);
             document.body.appendChild(dlAnchor);
             dlAnchor.click();
             dlAnchor.remove();
@@ -1037,7 +1971,7 @@
                 try {
                     const imported = JSON.parse(e.target.result);
                     if (Array.isArray(imported)) {
-                        if (confirm(`سيتم دمج (${imported.length}) سجل مع السجلات الحالية (الأحدث تعديلاً هو المعتمد). متابعة؟`)) {
+                        if (confirm(`استعادة ودمج (${imported.length}) سجل؟`)) {
                             const map = new Map(records.map(r => [String(r.id), r]));
                             imported.forEach(r => {
                                 if (!r || !r.id) return;
@@ -1045,28 +1979,26 @@
                                 if (!l || (Number(r.updatedAt) || 0) >= (Number(l.updatedAt) || 0)) { map.set(k, r); queueUpsert(r.id); }
                             });
                             records = Array.from(map.values());
-                            saveToStorage();
-                            updateSerialNumber();
-                            renderRecordsTable();
-                            updateMonthlyPreview();
-                            updateStaffReportPreview();
-                            showToast('تمت استعادة النسخة الاحتياطية بنجاح'); flushPending();
+                            saveToStorage(); 
+                            refreshAll();
+                            showToast('تمت استعادة البيانات بنجاح'); 
+                            flushPending();
                         }
                     }
-                } catch (err) {
-                    alert('ملف النسخة الاحتياطية غير صالح!');
-                }
+                } catch (err) { alert('ملف النسخة الاحتياطية غير صالح!'); }
             };
             reader.readAsText(file);
         }
 
         async function clearAllDatabase() {
-            if (!confirm('تحذير: سيتم مسح كافة سجلات العيادة نهائياً من هذا الجهاز ومن قاعدة Google! هل أنت متأكد؟')) return;
+            if (currentUser && currentUser.role !== 'admin') return alert('عفواً، مسح البيانات متاح لمدير النظام فقط!');
+            if (!confirm('تحذير: سيتم مسح كافة سجلات العيادة نهائياً! هل أنت متأكد؟')) return;
             records.forEach(r => queueDelete(r.id));
-            records = []; saveToStorage(); updateSerialNumber(); renderRecordsTable(); updateMonthlyPreview(); updateStaffReportPreview();
-            showToast('تم مسح كافة البيانات');
-            const ok = await flushPending();
-            if (!ok) showToast('تم المسح محلياً — سيُمسح من Google عند نجاح المزامنة', true);
+            records = []; 
+            saveToStorage(); 
+            refreshAll();
+            showToast('تم مسح كافة البيانات'); 
+            flushPending();
         }
 
         function switchTab(tabId) {
@@ -1079,13 +2011,16 @@
             });
 
             const activeBtn = document.getElementById('btn-' + tabId);
-            activeBtn.classList.add('tab-active');
-            activeBtn.classList.remove('text-teal-100');
+            if (activeBtn) {
+                activeBtn.classList.add('tab-active');
+                activeBtn.classList.remove('text-teal-100');
+            }
 
             if (tabId === 'recordsTab') renderRecordsTable();
-            if (tabId === 'reportsTab') {
-                updateMonthlyPreview();
-                updateStaffReportPreview();
+            if (tabId === 'reportsTab') { 
+                updateCategoryRangePreview(); 
+                updateStaffReportPreview(); 
+                renderComprehensiveReportTable(); 
             }
         }
 
@@ -1098,18 +2033,16 @@
             toast.classList.toggle('bg-red-700', isError);
             toast.classList.remove('translate-y-24', 'opacity-0');
             clearTimeout(toastTimer);
-            toastTimer = setTimeout(() => toast.classList.add('translate-y-24', 'opacity-0'), isError ? 8000 : 3000);
+            toastTimer = setTimeout(() => toast.classList.add('translate-y-24', 'opacity-0'), isError ? 7000 : 3000);
         }
 
-        // مزامنة تلقائية
         window.addEventListener('fb-init', () => syncNow());
         window.addEventListener('online', () => syncNow());
-        document.addEventListener('visibilitychange', () => { if (!document.hidden) syncNow(); });
-        setInterval(() => { const p = getPending(); if (p.up.length + p.del.length) flushPending(); }, 60000);
     </script>
-   <script type="module">
-        // اتصال مباشر بواجهة Firestore REST عبر HTTPS (بدون مكتبة Firebase) — أخف وأوضح في رسائل الخطأ
-        const PROJECT = "ayada-81260", API_KEY = "AIzaSyC2qYG1-ipWBbYV9Ln689Ft68YNPA3TlTM", COLL = "clinic_patients";
+
+    <!-- اتصال Firebase Firestore REST المتوافق تماماً -->
+    <script type="module">
+        const PROJECT = "iyada-81260", API_KEY = "AIzaSyC2qYG1-ipWBbYV9Ln689Ft68YNPA3TlTM", COLL = "clinic_patients";
         const BASE = `https://firestore.googleapis.com/v1/projects/${PROJECT}/databases/(default)/documents`;
         let idToken = null, lastAuthTry = 0;
 
@@ -1118,17 +2051,15 @@
             try { return await fetch(url, { ...opts, signal: ctl.signal }); }
             catch (e) {
                 const aborted = e && e.name === 'AbortError';
-                throw Object.assign(new Error(aborted ? 'انتهت مهلة الاتصال بخدمة Google' : 'تعذر الوصول إلى googleapis.com (الشبكة تحجب الاتصال أو لا يوجد إنترنت)'), { code: aborted ? 'timeout' : 'unavailable' });
+                throw Object.assign(new Error(aborted ? 'انتهت المهلة' : 'تعذر الاتصال بقاعدة البيانات'), { code: aborted ? 'timeout' : 'unavailable' });
             } finally { clearTimeout(t); }
         }
 
-        // دخول مجهول اختياري — يُستخدم فقط إذا رفضت القواعد الطلب بدون تسجيل دخول
         async function anonSignIn() {
             lastAuthTry = Date.now();
             const r = await http(`https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${API_KEY}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{"returnSecureToken":true}' }, 10000);
             const j = await r.json().catch(() => ({}));
-            if (!r.ok) throw new Error((j.error && j.error.message) || 'فشل الدخول المجهول');
-            idToken = j.idToken;
+            if (r.ok && j.idToken) idToken = j.idToken;
         }
 
         async function call(method, path, body) {
@@ -1139,12 +2070,11 @@
             });
             let r = await send();
             if ((r.status === 401 || r.status === 403) && Date.now() - lastAuthTry > 300000) {
-                try { await anonSignIn(); r = await send(); } catch (e) { console.info('الدخول المجهول غير متاح:', e.message); }
+                try { await anonSignIn(); r = await send(); } catch (e) {}
             }
             if (!r.ok) {
-                const j = await r.json().catch(() => ({})); const er = j.error || {}; const st = String(er.status || '');
-                const code = st === 'PERMISSION_DENIED' ? 'permission-denied' : st === 'NOT_FOUND' ? 'not-found' : st === 'UNAUTHENTICATED' ? 'unauthenticated' : (st || 'http-' + r.status).toLowerCase();
-                throw Object.assign(new Error(`HTTP ${r.status} — ${er.message || r.statusText}`), { code });
+                const j = await r.json().catch(() => ({}));
+                throw new Error((j.error && j.error.message) || `HTTP ${r.status}`);
             }
             return r.json();
         }
@@ -1153,9 +2083,9 @@
         const dec = f => 'stringValue' in f ? f.stringValue : 'integerValue' in f ? Number(f.integerValue) : 'doubleValue' in f ? f.doubleValue : 'booleanValue' in f ? f.booleanValue : null;
 
         window.firebaseClinic = {
-            ready: true, version: 'Firestore REST',
+            ready: true,
             async saveRecord(record) {
-                if (!record || !record.id) throw new Error('بيانات السجل غير صحيحة');
+                if (!record || !record.id) throw new Error('بيانات غير صحيحة');
                 const data = { ...record, updatedAt: Number(record.updatedAt) || Date.now() };
                 const fields = {}; for (const k in data) fields[k] = enc(data[k]);
                 await call('PATCH', `/${COLL}/${encodeURIComponent(String(record.id))}`, { fields });
@@ -1177,6 +2107,6 @@
             async deleteRecord(id) { await call('DELETE', `/${COLL}/${encodeURIComponent(String(id))}`); return true; }
         };
         window.dispatchEvent(new Event('fb-init'));
-   </script>
+    </script>
 </body>
 </html>
