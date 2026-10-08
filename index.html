@@ -86,6 +86,35 @@
             #toast { left: 12px; right: 12px; bottom: 16px; padding: 12px; }
             #loginModal > div { max-height: 90dvh; overflow-y: auto; }
         }
+
+        .clinic-brand-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 12px; }
+        .clinic-brand-right { display: flex; align-items: center; gap: 12px; min-width: 0; }
+        .clinic-brand-text { min-width: 0; }
+        .clinic-branch-name { display: block; font-size: 14px; font-weight: bold; color: #ccfbf1; overflow-wrap: anywhere; }
+        .foundation-logo-box { flex: 0 0 94px; background: white; padding: 4px; border-radius: 12px; }
+        .foundation-logo { display: block; width: 86px; height: 86px; object-fit: contain; }
+        .clinic-help-section { padding: 14px; border: 1px solid #cbd5e1; border-radius: 12px; background: #fff; }
+        .clinic-help-section summary, .clinic-help-section > button { width: 100%; min-height: 44px; display: flex; align-items: center; gap: 8px; font-weight: bold; font-size: 14px; color: #115e59; cursor: pointer; text-align: right; }
+        .clinic-support-links { display: grid; gap: 8px; padding: 8px 0; }
+        .clinic-support-links a { display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 10px 12px; background: #f0fdfa; color: #115e59; border-radius: 8px; font-size: 13px; font-weight: bold; }
+        .clinic-support-links a:hover { background: #ccfbf1; }
+        .clinic-about-dialog { width: min(400px, calc(100% - 32px)); border: 0; border-radius: 20px; padding: 24px; font-family: Tahoma, Arial, sans-serif; text-align: center; color: #334155; box-shadow: 0 20px 60px #0004; }
+        .clinic-about-dialog::backdrop { background: #0f172a99; }
+        .clinic-about-dialog img { width: 76px; height: 76px; margin: 0 auto 12px; border-radius: 18px; }
+        .clinic-about-dialog h2 { font-size: 20px; color: #115e59; font-weight: bold; margin-bottom: 10px; }
+        .clinic-about-dialog p { font-size: 14px; line-height: 1.9; margin-bottom: 20px; }
+        .clinic-about-dialog button { width: 100%; min-height: 44px; background: #0f766e; color: white; border-radius: 12px; font-weight: bold; }
+        @media screen and (max-width: 640px) {
+            .clinic-brand-row { gap: 8px; }
+            .clinic-brand-right { gap: 6px; }
+            .clinic-brand-right > img { width: 38px !important; height: 38px !important; }
+            .clinic-brand-right > button { padding: 6px; }
+            .clinic-brand-text h1 { font-size: 16px !important; }
+            .clinic-brand-text p { font-size: 10px; }
+            .clinic-branch-name { font-size: 12px; }
+            .foundation-logo-box { flex-basis: 68px; border-radius: 8px; }
+            .foundation-logo { width: 60px; height: 60px; }
+        }
         input[type="date"] {
             cursor: pointer;
             direction: ltr;
@@ -317,6 +346,18 @@
                 </div>
             </div>
 
+            <section class="clinic-help-section" aria-label="المساعدة">
+                <details id="clinicSupportMenu">
+                    <summary><span aria-hidden="true">☎️</span> التواصل والدعم</summary>
+                    <div class="clinic-support-links">
+                        <a href="tel:+967734915588"><span aria-hidden="true">📞</span> اتصال</a>
+                        <a href="https://wa.me/967734915588" target="_blank" rel="noopener noreferrer"><span aria-hidden="true">💬</span> واتساب</a>
+                        <a href="mailto:saleh0129@gmail.com"><span aria-hidden="true">✉️</span> بريد إلكتروني</a>
+                    </div>
+                </details>
+                <button type="button" onclick="showClinicAbout()"><span aria-hidden="true">ℹ️</span> حول التطبيق</button>
+            </section>
+
             <!-- بطاقة المستخدم الحالي -->
             <div class="p-2.5 bg-slate-100 rounded-xl text-xs space-y-1">
                 <div>المستخدم الحالي: <b id="drawerUsername" class="text-teal-900">-</b></div>
@@ -332,24 +373,24 @@
     </aside>
 
     <!-- الهيدر العلوي -->
-    <header class="bg-teal-800 text-white shadow-lg sticky top-0 z-40">
-        <div class="max-w-7xl mx-auto px-4 py-3 flex flex-col md:flex-row justify-between items-center gap-4">
-            <div class="flex items-center gap-3">
-                <button onclick="toggleSidebar(true)" class="p-2 bg-teal-700 hover:bg-teal-600 rounded-xl transition flex items-center justify-center shadow" title="فتح القائمة والإعدادات">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 6h16M4 12h16M4 18h16" />
-                    </svg>
-                </button>
-                <div>
-                    <div class="flex items-center gap-2">
-                        <img src="icon.png" alt="أيقونة سجل العيادة" width="48" height="48" style="width:48px;height:48px;border-radius:12px;flex-shrink:0;object-fit:contain;">
-                        <h1 class="text-xl font-extrabold tracking-wide">سجل العيادة</h1>
-                        <span id="headerClinicBranch" class="bg-teal-900 border border-teal-600 text-teal-200 text-xs px-2.5 py-0.5 rounded-full font-bold">المركز الرئيسي</span>
+    <header class="clinic-header bg-teal-800 text-white shadow-lg sticky top-0 z-40 no-print">
+        <div class="max-w-7xl mx-auto px-4 py-3">
+            <div class="clinic-brand-row">
+                <div class="clinic-brand-right">
+                    <button type="button" onclick="toggleSidebar(true)" class="p-2 bg-teal-700 hover:bg-teal-600 rounded-xl transition flex items-center justify-center shadow" title="فتح القائمة والإعدادات" aria-label="فتح القائمة والإعدادات">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 6h16M4 12h16M4 18h16" /></svg>
+                    </button>
+                    <img src="icon.png" alt="أيقونة سجل العيادة" width="48" height="48" style="width:48px;height:48px;border-radius:12px;flex-shrink:0;object-fit:contain;">
+                    <div class="clinic-brand-text">
+                        <h1 class="text-xl font-extrabold">سجل العيادة</h1>
+                        <span id="headerClinicBranch" class="clinic-branch-name">المركز الرئيسي</span>
+                        <p class="text-teal-200 text-xs">التسجيل الطبي والتقارير</p>
                     </div>
-                    <p class="text-teal-200 text-xs">نظام التسجيل الطبي وإصدار التقارير الإحصائية</p>
+                </div>
+                <div class="foundation-logo-box">
+                    <img src="foundation-logo.png" width="90" height="90" alt="شعار مؤسسة الرأفة للتنمية التعليمية والاجتماعية" class="foundation-logo">
                 </div>
             </div>
-
             <nav class="flex flex-wrap items-center gap-2 bg-teal-900/50 p-1.5 rounded-xl">
                 <button onclick="switchTab('formTab')" id="btn-formTab" class="tab-btn tab-active px-3.5 py-2 rounded-lg text-xs md:text-sm font-bold transition-all flex items-center gap-1.5">
                     <span>➕ تسجيل حالة</span>
@@ -376,6 +417,13 @@
             <button type="button" onclick="confirmLogout()" style="background:#dc2626;color:white;">تسجيل الخروج</button>
             <button type="button" onclick="document.getElementById('logoutConfirmDialog').close()" style="background:#e2e8f0;color:#334155;" autofocus>البقاء في التطبيق</button>
         </div>
+    </dialog>
+
+    <dialog id="clinicAboutDialog" class="clinic-about-dialog no-print" dir="rtl" aria-labelledby="clinicAboutTitle" aria-describedby="clinicAboutDescription">
+        <img src="icon.png" alt="أيقونة سجل العيادة" width="76" height="76">
+        <h2 id="clinicAboutTitle">سجل العيادة</h2>
+        <p id="clinicAboutDescription">تطبيق لتسجيل الحالات الواردة إلى العيادة، ومتابعة بيانات المرضى والمناوبين، وتنظيم الفروع، وإصدار التقارير والإحصائيات وطباعتها وتصديرها.</p>
+        <button type="button" onclick="document.getElementById('clinicAboutDialog').close()" autofocus>إغلاق</button>
     </dialog>
 
     <!-- المحتوى الرئيسي -->
@@ -899,6 +947,11 @@
             } else {
                 alert('اسم المستخدم أو كلمة المرور غير صحيحة!');
             }
+        }
+
+        function showClinicAbout() {
+            toggleSidebar(false);
+            document.getElementById('clinicAboutDialog').showModal();
         }
 
         function logout() {
