@@ -1,8 +1,10 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-    <link rel="icon" type="image/png" href="icon.png">
-    <link rel="apple-touch-icon" href="icon.png">
+    <link rel="icon" type="image/x-icon" href="clinic.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="icon-32.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
     <link rel="manifest" href="clinic.webmanifest">
     <meta name="application-name" content="سجل العيادة">
     <meta name="apple-mobile-web-app-title" content="سجل العيادة">
@@ -91,7 +93,7 @@
         .clinic-brand-right { display: flex; align-items: center; gap: 12px; min-width: 0; }
         .clinic-brand-text { min-width: 0; }
         .clinic-branch-name { display: block; font-size: 14px; font-weight: bold; color: #ccfbf1; overflow-wrap: anywhere; }
-        .foundation-logo-box { flex: 0 0 94px; background: white; padding: 4px; border-radius: 12px; }
+        .foundation-logo-box { flex: 0 0 94px; background: transparent; padding: 4px; }
         .foundation-logo { display: block; width: 86px; height: 86px; object-fit: contain; }
         .clinic-help-section { padding: 14px; border: 1px solid #cbd5e1; border-radius: 12px; background: #fff; }
         .clinic-help-section summary, .clinic-help-section > button { width: 100%; min-height: 44px; display: flex; align-items: center; gap: 8px; font-weight: bold; font-size: 14px; color: #115e59; cursor: pointer; text-align: right; }
@@ -358,6 +360,8 @@
                 <button type="button" onclick="showClinicAbout()"><span aria-hidden="true">ℹ️</span> حول التطبيق</button>
             </section>
 
+            <p class="clinic-version text-center text-slate-500" style="font-size:11px;">سجل العيادة — الإصدار 1.1.0</p>
+
             <!-- بطاقة المستخدم الحالي -->
             <div class="p-2.5 bg-slate-100 rounded-xl text-xs space-y-1">
                 <div>المستخدم الحالي: <b id="drawerUsername" class="text-teal-900">-</b></div>
@@ -384,7 +388,8 @@
                     <div class="clinic-brand-text">
                         <h1 class="text-xl font-extrabold">سجل العيادة</h1>
                         <span id="headerClinicBranch" class="clinic-branch-name">المركز الرئيسي</span>
-                        <p class="text-teal-200 text-xs">التسجيل الطبي والتقارير</p>
+                        <p class="text-teal-200 text-xs">نظام التسهيل الطبي وإصدار التقارير الإحصائية</p>
+                        <p class="clinic-version text-teal-200" style="font-size:10px;line-height:1.5;">الإصدار 1.1.0</p>
                     </div>
                 </div>
                 <div class="foundation-logo-box">
@@ -422,6 +427,7 @@
     <dialog id="clinicAboutDialog" class="clinic-about-dialog no-print" dir="rtl" aria-labelledby="clinicAboutTitle" aria-describedby="clinicAboutDescription">
         <img src="icon.png" alt="أيقونة سجل العيادة" width="76" height="76">
         <h2 id="clinicAboutTitle">سجل العيادة</h2>
+        <p class="clinic-version" style="font-size:11px;margin-bottom:10px;">الإصدار 1.1.0</p>
         <p id="clinicAboutDescription">تطبيق لتسجيل الحالات الواردة إلى العيادة، ومتابعة بيانات المرضى والمناوبين، وتنظيم الفروع، وإصدار التقارير والإحصائيات وطباعتها وتصديرها.</p>
         <button type="button" onclick="document.getElementById('clinicAboutDialog').close()" autofocus>إغلاق</button>
     </dialog>
