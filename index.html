@@ -93,6 +93,14 @@
         .clinic-brand-right { display: flex; align-items: center; gap: 12px; min-width: 0; }
         .clinic-brand-text { min-width: 0; }
         .clinic-branch-name { display: block; font-size: 14px; font-weight: bold; color: #ccfbf1; overflow-wrap: anywhere; }
+
+        .clinic-settings-fold { border: 1px solid #cbd5e1; border-radius: 12px; background: #f8fafc; overflow: hidden; }
+        .clinic-settings-fold > summary { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 13px 14px; min-height: 48px; font-size: 13px; font-weight: bold; color: #115e59; cursor: pointer; list-style: none; }
+        .clinic-settings-fold > summary::-webkit-details-marker { display: none; }
+        .clinic-settings-fold > summary::after { content: '⌄'; font-size: 20px; line-height: 1; }
+        .clinic-settings-fold[open] > summary { background: #e6f4ef; border-bottom: 1px solid #cbd5e1; }
+        .clinic-settings-fold[open] > summary::after { content: '⌃'; }
+        .clinic-settings-content { padding: 14px; }
         .clinic-help-section { padding: 14px; border: 1px solid #cbd5e1; border-radius: 12px; background: #fff; }
         .clinic-help-section summary, .clinic-help-section > button { width: 100%; min-height: 44px; display: flex; align-items: center; gap: 8px; font-weight: bold; font-size: 14px; color: #115e59; cursor: pointer; text-align: right; }
         .clinic-support-links { display: grid; gap: 8px; padding: 8px 0; }
@@ -250,10 +258,11 @@
             <button onclick="toggleSidebar(false)" class="text-white hover:text-slate-200 text-2xl font-bold">&times;</button>
         </div>
         
-        <div class="p-4 overflow-y-auto flex-1 space-y-5 custom-scrollbar text-sm">
+        <div class="p-4 overflow-y-auto flex-1 space-y-3 custom-scrollbar text-sm">
             <!-- 1. تغيير كلمة المرور للمستخدم الحالي -->
-            <div class="border border-slate-200 rounded-xl p-3.5 bg-slate-50">
-                <h3 class="font-bold text-teal-800 mb-2 flex items-center gap-1.5 text-xs">🔒 تغيير كلمة المرور الخاصة بي</h3>
+            <details id="myPasswordSection" class="clinic-settings-fold" name="clinic-settings">
+                <summary>🔒 تغيير كلمة المرور الخاصة بي</summary>
+                <div class="clinic-settings-content">
                 <div class="space-y-2">
                     <input type="password" id="currentPassInput" placeholder="كلمة المرور الحالية..." class="w-full border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs outline-none focus:border-teal-600 bg-white">
                     <input type="password" id="newPassInput" placeholder="كلمة المرور الجديدة..." class="w-full border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs outline-none focus:border-teal-600 bg-white">
@@ -261,21 +270,25 @@
                         حفظ كلمة المرور الجديدة
                     </button>
                 </div>
-            </div>
+                            </div>
+            </details>
 
             <!-- 2. إدارة الفروع / اسم العيادة -->
-            <div id="adminBranchesSection" class="border border-slate-200 rounded-xl p-3.5 bg-slate-50">
-                <h3 class="font-bold text-teal-800 mb-2 flex items-center gap-1.5 text-xs">🏢 إدارة الفروع (اسم العيادة)</h3>
+            <details id="adminBranchesSection" class="clinic-settings-fold" name="clinic-settings">
+                <summary>🏢 إدارة الفروع (اسم العيادة)</summary>
+                <div class="clinic-settings-content">
                 <div class="flex gap-1.5 mb-2">
                     <input type="text" id="newClinicBranch" placeholder="اسم الفرع الجديد..." class="flex-1 border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs outline-none focus:border-teal-600 bg-white">
                     <button onclick="addClinicBranch()" class="bg-teal-700 hover:bg-teal-800 text-white px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap">إضافة</button>
                 </div>
                 <div id="branchesListSettings" class="max-h-36 overflow-y-auto space-y-1.5"></div>
-            </div>
+                            </div>
+            </details>
 
             <!-- 3. إدارة المستخدمين والصلاحيات -->
-            <div id="adminUsersSection" class="border border-slate-200 rounded-xl p-3.5 bg-slate-50">
-                <h3 class="font-bold text-teal-800 mb-2 flex items-center gap-1.5 text-xs">👥 إدارة المستخدمين والصلاحيات</h3>
+            <details id="adminUsersSection" class="clinic-settings-fold" name="clinic-settings">
+                <summary>👥 إدارة المستخدمين والصلاحيات</summary>
+                <div class="clinic-settings-content">
                 <div class="space-y-2 mb-2 bg-white p-2.5 rounded-lg border border-slate-200">
                     <input type="text" id="newUserName" placeholder="الاسم الكامل..." class="w-full border border-slate-300 rounded-lg px-2.5 py-1 text-xs outline-none focus:border-teal-600">
                     <div class="grid grid-cols-2 gap-1.5">
@@ -298,21 +311,25 @@
                     </button>
                 </div>
                 <div id="usersListSettings" class="max-h-32 overflow-y-auto space-y-1.5"></div>
-            </div>
+                            </div>
+            </details>
 
             <!-- 4. إدارة المناوبين -->
-            <div id="adminStaffSection" class="border border-slate-200 rounded-xl p-3.5 bg-slate-50">
-                <h3 class="font-bold text-teal-800 mb-2 flex items-center gap-1.5 text-xs">👨‍⚕️ إدارة المناوبين</h3>
+            <details id="adminStaffSection" class="clinic-settings-fold" name="clinic-settings">
+                <summary>👨‍⚕️ إدارة المناوبين</summary>
+                <div class="clinic-settings-content">
                 <div class="flex gap-1.5 mb-2">
                     <input type="text" id="newStaffInput" placeholder="اسم المناوب الجديد..." class="flex-1 border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs outline-none focus:border-teal-600 bg-white">
                     <button onclick="addNewStaff()" class="bg-teal-700 hover:bg-teal-800 text-white px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap">إضافة</button>
                 </div>
                 <div id="staffListSettings" class="max-h-32 overflow-y-auto space-y-1.5"></div>
-            </div>
+                            </div>
+            </details>
 
             <!-- 5. إدارة التصنيفات -->
-            <div id="adminCategorySection" class="border border-slate-200 rounded-xl p-3.5 bg-slate-50">
-                <h3 class="font-bold text-teal-800 mb-2 flex items-center gap-1.5 text-xs">🏷️ إدارة التصنيفات</h3>
+            <details id="adminCategorySection" class="clinic-settings-fold" name="clinic-settings">
+                <summary>🏷️ إدارة التصنيفات</summary>
+                <div class="clinic-settings-content">
                 <div class="space-y-1.5 mb-2">
                     <input type="text" id="newCategoryInput" placeholder="اسم التصنيف..." class="w-full border border-slate-300 rounded-lg px-2.5 py-1 text-xs outline-none focus:border-teal-600 bg-white">
                     <div class="flex gap-1.5">
@@ -324,11 +341,13 @@
                     </div>
                 </div>
                 <div id="categoryListSettings" class="max-h-32 overflow-y-auto space-y-1.5"></div>
-            </div>
+                            </div>
+            </details>
 
             <!-- 6. النسخ الاحتياطي وإدارة البيانات -->
-            <div id="adminDataSection" class="border border-teal-200 rounded-xl p-3.5 bg-teal-50/50">
-                <h3 class="font-bold text-teal-900 mb-1.5 flex items-center gap-1.5 text-xs">💾 النسخ الاحتياطي وقاعدة البيانات</h3>
+            <details id="adminDataSection" class="clinic-settings-fold" name="clinic-settings">
+                <summary>💾 النسخ الاحتياطي وقاعدة البيانات</summary>
+                <div class="clinic-settings-content">
                 <p class="text-[11px] text-slate-500 mb-2">حفظ نسخة احتياطية من السجلات محلياً أو استعادتها.</p>
                 <div class="flex flex-col gap-2">
                     <button onclick="downloadBackup()" class="w-full bg-slate-700 hover:bg-slate-800 text-white text-xs font-bold py-2 rounded-lg transition">
@@ -342,7 +361,8 @@
                         🗑️ مسح السجلات نهائياً
                     </button>
                 </div>
-            </div>
+                            </div>
+            </details>
 
             <section class="clinic-help-section" aria-label="المساعدة">
                 <details id="clinicSupportMenu">
@@ -356,7 +376,7 @@
                 <button type="button" onclick="showClinicAbout()"><span aria-hidden="true">ℹ️</span> حول التطبيق</button>
             </section>
 
-            <p class="clinic-version text-center text-slate-500" style="font-size:11px;">سجل العيادة — الإصدار 1.2.0</p>
+            <p class="clinic-version text-center text-slate-500" style="font-size:11px;">سجل العيادة — الإصدار 1.2.1</p>
 
             <!-- بطاقة المستخدم الحالي -->
             <div class="p-2.5 bg-slate-100 rounded-xl text-xs space-y-1">
@@ -385,7 +405,7 @@
                         <h1 class="text-xl font-extrabold">سجل العيادة</h1>
                         <span id="headerClinicBranch" class="clinic-branch-name">المركز الرئيسي</span>
                         <p class="text-teal-200 text-xs">نظام التسهيل الطبي وإصدار التقارير الإحصائية</p>
-                        <p class="clinic-version text-teal-200" style="font-size:10px;line-height:1.5;">الإصدار 1.2.0</p>
+                        <p class="clinic-version text-teal-200" style="font-size:10px;line-height:1.5;">الإصدار 1.2.1</p>
                     </div>
                 </div>
             </div>
@@ -420,7 +440,7 @@
     <dialog id="clinicAboutDialog" class="clinic-about-dialog no-print" dir="rtl" aria-labelledby="clinicAboutTitle" aria-describedby="clinicAboutDescription">
         <img src="icon.png" alt="أيقونة سجل العيادة" width="76" height="76">
         <h2 id="clinicAboutTitle">سجل العيادة</h2>
-        <p class="clinic-version" style="font-size:11px;margin-bottom:10px;">الإصدار 1.2.0</p>
+        <p class="clinic-version" style="font-size:11px;margin-bottom:10px;">الإصدار 1.2.1</p>
         <p id="clinicAboutDescription">تطبيق لتسجيل الحالات الواردة إلى العيادة، ومتابعة بيانات المرضى والمناوبين، وتنظيم الفروع، وإصدار التقارير والإحصائيات وطباعتها وتصديرها.</p>
         <button type="button" onclick="document.getElementById('clinicAboutDialog').close()" autofocus>إغلاق</button>
     </dialog>
