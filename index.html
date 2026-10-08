@@ -333,6 +333,7 @@
                         ➕ حفظ المستخدم
                     </button>
                 </div>
+                <p id="userDirectoryStatus" class="text-xs text-slate-600" role="status"></p><button type="button" onclick="refreshUserDirectory()" class="border rounded px-2 py-1 text-xs mb-2">تحديث قائمة المستخدمين</button>
                 <div id="usersListSettings" class="max-h-60 overflow-y-auto space-y-1.5"></div>
                             </div>
             </details>
@@ -400,7 +401,7 @@
                 <button type="button" onclick="showClinicAbout()"><span aria-hidden="true">ℹ️</span> حول التطبيق</button>
             </section>
 
-            <p class="clinic-version text-center text-slate-500" style="font-size:11px;">سجل العيادة — الإصدار 2.0.0</p>
+            <p class="clinic-version text-center text-slate-500" style="font-size:11px;">سجل العيادة — الإصدار 2.1.0</p>
 
             <!-- بطاقة المستخدم الحالي -->
             <div class="p-2.5 bg-slate-100 rounded-xl text-xs space-y-1">
@@ -429,7 +430,7 @@
                         <h1 class="text-xl font-extrabold">سجل العيادة</h1>
                         <span id="headerClinicBranch" class="clinic-branch-name">المركز الرئيسي</span>
                         <p class="text-teal-200 text-xs">نظام التسهيل الطبي وإصدار التقارير الإحصائية</p>
-                        <p class="clinic-version text-teal-200" style="font-size:10px;line-height:1.5;">الإصدار 2.0.0</p>
+                        <p class="clinic-version text-teal-200" style="font-size:10px;line-height:1.5;">الإصدار 2.1.0</p>
                     </div>
                 </div>
             </div>
@@ -453,7 +454,7 @@
     <dialog id="clinicAboutDialog" class="clinic-about-dialog no-print" dir="rtl" aria-labelledby="clinicAboutTitle" aria-describedby="clinicAboutDescription">
         <img src="icon.png" alt="أيقونة سجل العيادة" width="76" height="76">
         <h2 id="clinicAboutTitle">سجل العيادة</h2>
-        <p class="clinic-version" style="font-size:11px;margin-bottom:10px;">الإصدار 2.0.0</p>
+        <p class="clinic-version" style="font-size:11px;margin-bottom:10px;">الإصدار 2.1.0</p>
         <p id="clinicAboutDescription">تطبيق لتسجيل الحالات الواردة إلى العيادة، ومتابعة بيانات المرضى والمناوبين، وتنظيم الفروع، وإصدار التقارير والإحصائيات وطباعتها وتصديرها.</p>
         <button type="button" onclick="document.getElementById('clinicAboutDialog').close()" autofocus>إغلاق</button>
     </dialog>
@@ -463,6 +464,7 @@
 
 
         <div id="noAccountAccess" class="hidden p-5 bg-white border rounded-xl mb-4">لا توجد أقسام أو فروع متاحة لحسابك. تواصل مع مدير النظام.</div>
+        <div id="syncConflictPanel" class="hidden bg-amber-50 border border-amber-300 rounded-xl p-3 mb-3 text-sm no-print" aria-live="polite"></div>
         <div id="activeUserIdentity" class="hidden no-print bg-teal-50 border border-teal-200 rounded-xl px-4 py-3 mb-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm" aria-live="polite">
             <label class="flex items-center gap-2">العيادة <select id="userFacilityPicker" onchange="selectAccountBranch(this.value)" class="border border-teal-300 rounded-lg p-2 bg-white"></select></label>
             <span>المستخدم: <b id="activeUserFullName" class="text-teal-900"></b></span>
@@ -870,6 +872,7 @@
 
     </main>
 
+    <script src="offline-store.js"></script>
     <script>
         // دالة فتح التقويم مباشرة بمجرد النقر أو التركيز على أي حقل تاريخ
         function openPicker(input) {
@@ -1076,7 +1079,7 @@
             if (id) {
                 localStorage.setItem(ACTIVE_BRANCH_KEY, branchDirectory[id].name);
                 document.getElementById('headerClinicBranch').textContent = branchDirectory[id].name;
-                loadRecords();
+                await loadRecords();
             }
             resetFormFull(); refreshAll(); applyPermissions();
             if (id && hasPerm('view')) await syncNow();
@@ -1086,7 +1089,7 @@
             if (!appLoaded) await new Promise(resolve => window.addEventListener('load', resolve, {once:true}));
             if (generation !== authGeneration) return;
             currentUser = profile?.active ? profile : null;
-            records = []; usersList = []; activeBranchId = ''; editingUserUid = null;
+            records = []; localState = {records:[],operations:[]}; usersList = []; activeBranchId = ''; editingUserUid = null;
             document.getElementById('loginModal').classList.toggle('hidden', !!currentUser);
             document.getElementById('loginPassword').value = '';
             document.getElementById('initialAdminSetup').classList.add('hidden');
@@ -1100,7 +1103,8 @@
             }
             applyPermissions(); authMessage('');
         };
-        window.cloudDirectoryChanged = function(list) { usersList = list; renderUsersSettings(); };
+        window.cloudDirectoryChanged = function(list) { usersList = list.sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''),'ar')); renderUsersSettings(); document.getElementById('userDirectoryStatus').textContent = list.length ? 'آخر تحديث: '+new Date().toLocaleTimeString('ar') : 'لا توجد ملفات مستخدمين سحابية. الحسابات المحلية السابقة تحتاج ربطًا بالحساب السحابي.'; };
+        async function refreshUserDirectory() { if(!isAdministrator())return;try{await window.firebaseClinic.refreshUsers();}catch(e){document.getElementById('userDirectoryStatus').textContent='تعذر تحميل المستخدمين: '+firebaseErrorMessage(e);showToast(firebaseErrorMessage(e),true);} }
         window.cloudAuthNotice = function(message, kind) {
             authMessage(message, true);
             document.getElementById('verifyAdminControls').classList.toggle('hidden', kind !== 'verify');
@@ -1159,13 +1163,15 @@
         }
         async function deleteUser(idx) {
             if (!isAdministrator()) return;
-            const user = usersList[idx]; if (user.uid === currentUser.uid) return showToast('لا يمكن تعطيل حسابك الحالي.',true);
+            const user = usersList[idx]; if (user.uid === currentUser.uid || user.email?.toLowerCase() === 'saleh0129@gmail.com') return showToast('لا يمكن تعطيل حسابك الحالي.',true);
+            if(!confirm(user.active === false ? 'تفعيل وصول هذا المستخدم؟' : 'تعطيل وصول هذا المستخدم على جميع أجهزته المتصلة؟'))return;
             try { await window.firebaseClinic.setUserActive(user.uid, user.active === false); showToast(user.active === false ? 'تم تفعيل الحساب' : 'تم تعطيل الوصول للحساب'); }
             catch(e) { showToast(firebaseErrorMessage(e),true); }
         }
+        function explainPermanentRemoval(idx) { const user=usersList[idx];if(!isAdministrator() || !user || user.uid===currentUser.uid || user.email?.toLowerCase()==='saleh0129@gmail.com')return;alert('الحذف النهائي من Authentication يحتاج خدمة خلفية غير مفعلة حاليًا. عطّل الحساب أولًا من هذه القائمة، ثم احذفه بنفسك من Firebase Authentication. يبقى ملفه معطلًا لحفظ ارتباطه بالسجلات التاريخية، ولا تُحذف سجلات المرضى.');window.open('https://console.firebase.google.com/project/clinic-0129/authentication/users','_blank','noopener'); }
         function renderUsersSettings() {
             const list=document.getElementById('usersListSettings');
-            list.innerHTML=usersList.map((u,idx)=>`<div class="bg-white p-3 rounded-lg border border-slate-200 space-y-2"><div class="font-bold">${esc(u.name)}</div><div class="text-xs">${esc(ROLE_LABELS[u.role] || u.role)} — ${u.active === false ? 'معطل' : 'نشط'}</div><div class="text-xs break-all">${esc(u.email)}</div><div class="text-xs text-teal-700">${Object.keys(PERMISSION_LABELS).filter(p=>u.role==='admin'||u.permissions?.[p]).map(p=>PERMISSION_LABELS[p]).join('، ')}</div><div class="flex gap-2"><button type="button" onclick="editAccount(${idx})" class="text-blue-700 border rounded px-2 py-1">الصلاحيات والفروع</button>${u.uid !== currentUser?.uid ? `<button type="button" onclick="deleteUser(${idx})" class="text-red-700 border rounded px-2 py-1">${u.active === false ? 'تفعيل' : 'تعطيل'}</button>` : ''}</div></div>`).join('');
+            list.innerHTML=usersList.map((u,idx)=>`<div class="bg-white p-3 rounded-lg border border-slate-200 space-y-2"><div class="font-bold">${esc(u.name||u.email||'اسم غير مسجل')}</div><div class="text-xs">${esc(ROLE_LABELS[u.role] || u.role)} — ${u.active === false ? 'معطل' : 'نشط'}</div><div class="text-xs break-all">${esc(u.email)}</div><div class="text-xs text-teal-700">${Object.keys(PERMISSION_LABELS).filter(p=>u.role==='admin'||u.permissions?.[p]).map(p=>PERMISSION_LABELS[p]).join('، ')}</div><div class="flex gap-2"><button type="button" onclick="editAccount(${idx})" class="text-blue-700 border rounded px-2 py-1">تعديل الصلاحيات والفروع</button>${u.uid !== currentUser?.uid && u.email?.toLowerCase() !== 'saleh0129@gmail.com' ? `<button type="button" onclick="deleteUser(${idx})" class="text-red-700 border rounded px-2 py-1">${u.active === false ? 'تفعيل' : 'تعطيل'}</button><button type="button" onclick="explainPermanentRemoval(${idx})" class="text-slate-600 border rounded px-2 py-1">الحذف النهائي من Firebase</button>` : ''}</div></div>`).join('');
         }
         async function migratePreviousRecords() {
             if (!isAdministrator()) return;
@@ -1389,105 +1395,136 @@
             updateCategoryRangePreview();
         }
 
-        // ==================== المزامنة مع Firebase Realtime Database ====================
-        let PENDING_KEY = 'clinic_secure_pending_signedout', INIT_KEY = 'clinic_secure_initial_signedout';
+        // Durable outbox, separated by authenticated account and clinic branch.
+        let PENDING_KEY = 'unused', INIT_KEY = 'unused';
         let appLoaded = false, syncState = 'idle', syncError = '', flushing = false, syncing = false;
-
-        function esc(v) { return String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-        function todayLocal() { const d = new Date(); return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10); }
-
-        function getPending() {
-            try { const p = JSON.parse(localStorage.getItem(PENDING_KEY)) || {}; return { up: p.up || [], del: p.del || [] }; }
-            catch (e) { return { up: [], del: [] }; }
+        let localState = {records:[],operations:[]}, localScope = '', retryTimer;
+        function esc(v) { return String(v ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+        function todayLocal() { const d=new Date();return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,10); }
+        function currentScope() { return currentUser && activeBranchId ? {uid:currentUser.uid,name:'branch:'+activeBranchId,branch:activeBranchId} : null; }
+        function inScope(scope) { return currentUser?.uid===scope.uid && activeBranchId===scope.branch; }
+        function getPending() { const ops=localState.operations||[];return {up:ops.filter(o=>o.kind==='up').map(o=>String(o.id)),del:ops.filter(o=>o.kind==='del').map(o=>String(o.id))}; }
+        function queueUpsert(id) { stageOperation('up',id); }
+        function queueDelete(id) { stageOperation('del',id); }
+        function stageOperation(kind,id,previous) {
+            const record=records.find(r=>String(r.id)===String(id)), existing=localState.operations.find(o=>String(o.id)===String(id));
+            const old=previous || localState.records.find(r=>String(r.id)===String(id));
+            const operation={id:String(id),operationId:crypto.randomUUID(),kind,baseVersion:existing?existing.baseVersion:(old?.revision || old?.updatedAt || null),createdAt:Date.now(),status:existing?.status==='conflict'?'conflict':'pending',replaces:existing?.operationId||null};
+            if(existing?.status==='conflict'){operation.remote=existing.remote||null;operation.reason=existing.reason;}
+            if(kind==='up') { operation.record={...record,revision:operation.operationId}; if(record) record.revision=operation.operationId; }
+            localState.operations=localState.operations.filter(o=>String(o.id)!==String(id));localState.operations.push(operation);
         }
-        function setPending(p) { try { localStorage.setItem(PENDING_KEY, JSON.stringify(p)); } catch (e) {} updateSyncStatus(); }
-        function queueUpsert(id) { const p = getPending(); id = String(id); p.del = p.del.filter(x => x !== id); if (!p.up.includes(id)) p.up.push(id); setPending(p); }
-        function queueDelete(id) { const p = getPending(); id = String(id); p.up = p.up.filter(x => x !== id); if (!p.del.includes(id)) p.del.push(id); setPending(p); }
-        function removePending(kind, id) { const p = getPending(); p[kind] = p[kind].filter(x => x !== String(id)); setPending(p); }
-
         function updateSyncStatus() {
-            const el = document.getElementById('syncStatus'); if (!el) return;
-            const p = getPending(); const n = p.up.length + p.del.length;
-            let cls, txt;
-            if (syncState === 'syncing') { cls = 'bg-blue-600'; txt = '🔄 جارية المزامنة...'; }
-            else if (syncState === 'error') { cls = 'bg-red-600'; txt = '⚠️ خطأ مزامنة' + (n ? ` (${n})` : ''); }
-            else if (n) { cls = 'bg-amber-600'; txt = `⏳ بانتظار الرفع (${n})`; }
-            else if (syncState === 'ok') { cls = 'bg-emerald-600'; txt = '☁️ متزامن'; }
-            else { cls = 'bg-slate-600'; txt = '☁️ ...'; }
-            el.className = 'px-3 py-2 rounded-lg text-xs font-bold text-white transition ' + cls;
-            el.textContent = txt;
-        }
-
-        function refreshAll() { 
-            updateBadge(); 
-            updateSerialNumber(); 
-            renderRecordsTable(); 
-            updateCategoryRangePreview(); 
-            updateStaffReportPreview(); 
-            renderComprehensiveReportTable(); 
-        }
-
-        async function flushPending() {
-            const fb = window.firebaseClinic;
-            if (!currentUser || !canUseBranch(activeBranchId) || !fb || !fb.ready) { syncState = 'error'; updateSyncStatus(); return false; }
-            if (flushing) return false;
-            flushing = true;
-            try {
-                for (const id of [...getPending().up]) {
-                    const rec = records.find(r => String(r.id) === id);
-                    if (rec) await fb.saveRecord(rec);
-                    removePending('up', id);
-                }
-                for (const id of [...getPending().del]) {
-                    await fb.deleteRecord(id);
-                    removePending('del', id);
-                }
-                syncState = 'ok'; syncError = '';
-                return true;
-            } catch (err) {
-                syncState = 'error';
-                return false;
-            } finally { flushing = false; updateSyncStatus(); }
-        }
-
-        async function syncNow(manual = false) {
-            if (!appLoaded || syncing || !currentUser || !hasPerm('view') || !canUseBranch(activeBranchId)) return;
-            const fb = window.firebaseClinic;
-            if (!fb || !fb.ready) {
-                syncState = 'error'; updateSyncStatus();
-                if (manual) showToast('⚠️ خدمة المزامنة غير جاهزة', true);
-                return;
+            const el=document.getElementById('syncStatus');if(!el)return;
+            const n=localState.operations.length, conflicts=localState.operations.filter(o=>o.status==='conflict').length;
+            let cls='bg-slate-600',txt='سجّل الدخول';
+            if(currentUser) {
+                if(!navigator.onLine) {cls='bg-amber-600';txt='غير متصل — محفوظ محليًا'+(n?' ('+n+')':'');}
+                else if(syncState==='syncing') {cls='bg-blue-600';txt='جارٍ رفع البيانات ('+n+')';}
+                else if(conflicts) {cls='bg-amber-600';txt='تعارض يحتاج مراجعة ('+conflicts+')';}
+                else if(syncState==='error') {cls='bg-red-600';txt='تعذرت المزامنة — ستتم إعادة المحاولة'+(n?' ('+n+')':'');}
+                else if(n) {cls='bg-amber-600';txt='بانتظار المزامنة ('+n+')';}
+                else {cls='bg-emerald-600';txt='متصل — البيانات متزامنة';}
             }
-            const syncUser = currentUser.uid, syncBranch = activeBranchId;
-            syncing = true; syncState = 'syncing'; updateSyncStatus();
-            try {
-                const cloud = await fb.loadRecords();
-                if (currentUser?.uid !== syncUser || activeBranchId !== syncBranch) return;
-                const cloudIds = new Set(cloud.map(r => String(r.id)));
-                if (!localStorage.getItem(INIT_KEY)) {
-                    records.forEach(r => { if (r && r.id && !cloudIds.has(String(r.id))) queueUpsert(r.id); });
-                    localStorage.setItem(INIT_KEY, '1');
-                }
-                const pending = getPending();
-                const map = new Map();
-                records.forEach(r => { if (r && r.id && pending.up.includes(String(r.id))) map.set(String(r.id), r); });
-                cloud.forEach(r => {
-                    const k = String(r.id);
-                    if (pending.del.includes(k) || pending.up.includes(k)) return;
-                    const l = map.get(k);
-                    if (!l || (Number(r.updatedAt) || 0) > (Number(l.updatedAt) || 0)) map.set(k, r);
-                });
-                records = Array.from(map.values()).sort((a, b) => (Number(a.serial) || 0) - (Number(b.serial) || 0));
-                saveToStorage(); refreshAll();
-                syncing = false;
-                const ok = await flushPending();
-                if (manual) showToast(ok ? '✅ تمت المزامنة مع السحابة' : '⚠️ تعذر رفع بعض السجلات', !ok);
-            } catch (e) {
-                syncState = 'error';
-                syncError = e && e.code === 'PERMISSION_DENIED' ? 'لا تسمح قواعد Firebase بالوصول إلى السجلات' : 'تعذر الاتصال بقاعدة البيانات';
-                if (manual) showToast('⚠️ ' + syncError, true);
-            } finally { syncing = false; updateSyncStatus(); }
+            el.className='px-3 py-2 rounded-lg text-xs font-bold text-white transition '+cls;el.textContent=txt;el.title=syncError||'اضغط للمزامنة الآن';
+            renderSyncConflicts();
         }
+        function refreshAll() {updateBadge();updateSerialNumber();renderRecordsTable();updateCategoryRangePreview();updateStaffReportPreview();renderComprehensiveReportTable();}
+        async function loadRecords() {
+            const scope=currentScope();records=[];localState={records:[],operations:[]};localScope='';
+            if(!scope || !hasPerm('view') || !canUseBranch(scope.branch)) {updateBadge();return;}
+            let saved=await clinicStore.load(scope.uid,scope.name);
+            if(!saved) {
+                // Preserve the preceding version's account-scoped pending edits exactly once.
+                const oldKey='clinic_secure_records_'+scope.uid+'_'+scope.branch;
+                const old=JSON.parse(localStorage.getItem(oldKey)||'[]'), pending=JSON.parse(localStorage.getItem('clinic_secure_pending_'+scope.uid+'_'+scope.branch)||'{}');
+                saved={records:Array.isArray(old)?old:[],operations:[]};
+                for(const id of pending.up||[]) {const r=saved.records.find(r=>String(r.id)===String(id));if(r)saved.operations.push({id:String(id),kind:'up',record:r,baseVersion:null,operationId:crypto.randomUUID(),createdAt:Date.now(),status:'pending'});}
+                for(const id of pending.del||[]) saved.operations.push({id:String(id),kind:'del',baseVersion:null,operationId:crypto.randomUUID(),createdAt:Date.now(),status:'conflict',reason:'حذف قديم يحتاج مراجعة'});
+                await clinicStore.save(scope.uid,scope.name,saved);
+                // Remove only the migrated account-scoped copies after durable success.
+                localStorage.removeItem(oldKey);localStorage.removeItem('clinic_secure_pending_'+scope.uid+'_'+scope.branch);
+            }
+            if(!inScope(scope))return;localState=saved;localScope=scope.uid+':'+scope.name;records=structuredClone(saved.records||[]);refreshAll();updateSyncStatus();
+        }
+        async function saveToStorage() {
+            const scope=currentScope();if(!scope || !canUseBranch(scope.branch))throw new Error('لا يمكن حفظ البيانات دون حساب وفرع مصرح به.');
+            const operations=structuredClone(localState.operations), draft=structuredClone(records);
+            operations.forEach(o=>{if(o.kind==='up'){const r=draft.find(r=>String(r.id)===String(o.id));if(r)o.record={...r,revision:o.operationId};}});
+            const result=await clinicStore.mutate(scope.uid,scope.name,state=>{
+                state=state||{records:[],operations:[]};
+                let ops=state.operations||[];
+                const map=new Map((state.records||[]).map(r=>[String(r.id),r]));
+                operations.forEach(o=>{
+                    if(ops.some(existing=>existing.operationId===o.operationId))return;
+                    ops=ops.filter(existing=>existing.operationId!==o.replaces);
+                    const competing=ops.find(existing=>String(existing.id)===String(o.id));
+                    if(competing){o.status='conflict';o.remote=competing.record||null;o.reason='يوجد تعديل محلي آخر من نافذة ثانية؛ احتُفظ بالعمليتين.';}
+                    ops.push(o);if(o.kind==='del')map.delete(String(o.id));else if(o.record)map.set(String(o.id),o.record);
+                });
+                return {records:[...map.values()],operations:ops};
+            });
+            if(inScope(scope)){localState=result;records=structuredClone(result.records);updateBadge();updateSyncStatus();}
+        }
+        async function flushPending() { return syncNow(); }
+        function scheduleRetry(){clearTimeout(retryTimer);if(currentUser && navigator.onLine)retryTimer=setTimeout(()=>syncNow(),15000);}
+        async function syncNow(manual=false) {
+            if(!appLoaded || syncing || !currentUser || !hasPerm('view') || !canUseBranch(activeBranchId))return false;
+            if(!navigator.onLine){syncState='offline';updateSyncStatus();return false;}
+            const scope=currentScope(),fb=window.firebaseClinic;if(!fb?.ready)return false;
+            syncing=true;flushing=true;syncState='syncing';updateSyncStatus();
+            try {
+                // Fetch authority from the server, never accept a cached profile for uploads.
+                await fb.validateAuthority();if(!inScope(scope))return false;
+                let state=await clinicStore.load(scope.uid,scope.name)||{records:[],operations:[]};
+                for(const operation of state.operations.filter(o=>o.status!=='conflict')) {
+                    if(!inScope(scope))return false;
+                    let result;
+                    try{result=await fb.commitOperation(operation,scope.branch);}catch(error){
+                        if(error.code==='PERMISSION_DENIED'){result={conflict:true,reason:'سُحبت صلاحية العملية؛ لم تُرفع البيانات.'};}
+                        else throw error;
+                    }
+                    state=await clinicStore.mutate(scope.uid,scope.name,next=>{
+                        next=next||{records:[],operations:[]};const queued=next.operations.find(o=>o.operationId===operation.operationId);
+                        if(result.conflict){if(queued){queued.status='conflict';queued.remote=result.remote||null;queued.reason=result.reason||'تغير السجل في جهاز آخر.';}}
+                        else {
+                            next.operations=next.operations.filter(o=>o.operationId!==operation.operationId);
+                            const successor=next.operations.find(o=>String(o.id)===String(operation.id));
+                            if(successor && successor.baseVersion===operation.baseVersion)successor.baseVersion=operation.operationId;
+                        }
+                        return next;
+                    });
+                }
+                const cloud=await fb.loadRecords();if(!inScope(scope))return false;
+                state=await clinicStore.mutate(scope.uid,scope.name,next=>{
+                    next=next||{records:[],operations:[]};const map=new Map(cloud.map(r=>[String(r.id),r]));
+                    next.operations.forEach(o=>{if(o.kind==='del')map.delete(String(o.id));else if(o.record)map.set(String(o.id),o.record);});
+                    return {records:[...map.values()],operations:next.operations};
+                });
+                localState=state;records=structuredClone(state.records);syncState='ok';syncError='';refreshAll();
+                if(manual)showToast(state.operations.length?'بعض العمليات تحتاج مراجعة.':'تمت المزامنة مع السحابة',!!state.operations.length);
+                return !state.operations.length;
+            }catch(error){syncState='error';syncError=error.message||'تعذر الاتصال';if(manual)showToast(syncError,true);scheduleRetry();return false;}
+            finally{syncing=false;flushing=false;updateSyncStatus();}
+        }
+        function renderSyncConflicts(){
+            const el=document.getElementById('syncConflictPanel');if(!el)return;
+            const conflicts=localState.operations.filter(o=>o.status==='conflict');el.classList.toggle('hidden',!currentUser||!conflicts.length);
+            el.innerHTML='<strong>عمليات تحتاج مراجعة</strong>'+conflicts.map(o=>`<div class="border-t py-2 mt-2"><div>${esc(o.record?.patientName||'سجل '+o.id)} — ${esc(o.reason||'تغير السجل في جهاز آخر.')}</div><div class="text-xs">نسختك: ${esc(o.record?.diagnosis||'عملية حذف')} | النسخة المركزية: ${esc(o.remote?.diagnosis||'سجل غير موجود أو صلاحية مسحوبة')}</div><button class="border rounded px-2 py-1 mt-2" onclick="keepServerVersion('${o.operationId}')">اعتماد النسخة المركزية وإلغاء عمليتي</button> <span class="text-xs">للحفاظ على تعديلك، صدّر النسخة المحلية أولًا ثم راجع السجل.</span></div>`).join('');
+        }
+        async function keepServerVersion(operationId){
+            if(!confirm('إلغاء هذه العملية المحلية واعتماد النسخة المركزية؟'))return;
+            const scope=currentScope();if(!scope)return;
+            try{await window.firebaseClinic.validateAuthority();const cloud=await window.firebaseClinic.loadRecords();
+                const next=await clinicStore.mutate(scope.uid,scope.name,state=>{
+                    state.operations=state.operations.filter(o=>o.operationId!==operationId);const map=new Map(cloud.map(r=>[String(r.id),r]));
+                    state.operations.forEach(o=>o.kind==='up'?map.set(String(o.id),o.record):map.delete(String(o.id)));state.records=[...map.values()];return state;
+                });if(inScope(scope)){localState=next;records=structuredClone(next.records);refreshAll();updateSyncStatus();}
+            }catch(e){showToast(e.message,true);}
+        }
+        window.addEventListener('offline',()=>{syncState='offline';updateSyncStatus();});
+        document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')syncNow();});
+        setInterval(()=>{if(currentUser && navigator.onLine)syncNow();},60000);
 
         // ==================== التهيئة الافتراضية لجميع حقول التواريخ ====================
         window.onload = function() {
@@ -1526,21 +1563,6 @@
             document.getElementById('compEndDate').value = today;
 
             renderComprehensiveReportTable();
-        }
-
-        function loadRecords() {
-            if (!currentUser || !hasPerm('view') || !canUseBranch(activeBranchId)) { records = []; updateBadge(); return; }
-            const saved = localStorage.getItem(STORAGE_KEY);
-            if (saved) {
-                try { records = JSON.parse(saved) || []; } catch (e) { records = []; }
-            }
-            updateBadge();
-        }
-
-        function saveToStorage() {
-            if (!currentUser || !canUseBranch(activeBranchId)) { updateBadge(); return; }
-            try { localStorage.setItem(STORAGE_KEY, JSON.stringify(records)); } catch (e) {}
-            updateBadge();
         }
 
         function updateBadge() {
@@ -1600,12 +1622,13 @@
                 : 'هل أنت متأكد من حفظ بيانات المريض في السجل الطبي؟';
             if (!confirm(confirmMsg)) return;
 
+            const beforeRecords=structuredClone(records),beforeState=structuredClone(localState);
             try {
                 const genderElement = document.querySelector('input[name="gender"]:checked');
                 const patientName = document.getElementById('patientName').value.trim();
                 const branch = localStorage.getItem(ACTIVE_BRANCH_KEY) || 'المركز الرئيسي';
 
-                const recordId = isEditing ? Number(editId) : Date.now();
+                const recordId = isEditing ? Number(editId) : Date.now()*4096+(crypto.getRandomValues(new Uint16Array(1))[0]%4096);
                 let serialNumber;
                 if (isEditing) {
                     const oldRecord = records.find(r => Number(r.id) === recordId);
@@ -1653,13 +1676,14 @@
                 }
 
                 queueUpsert(recordId);
-                saveToStorage();
+                await saveToStorage();
                 resetFormFull();
                 refreshAll();
                 flushPending();
             } catch (error) {
+                records=beforeRecords;localState=beforeState;refreshAll();
                 console.error(error);
-                showToast('حدث خطأ أثناء الحفظ', true);
+                showToast('لم يُحفظ السجل: '+error.message+' — أعد المحاولة.', true);
             }
         }
 
@@ -1786,9 +1810,10 @@
         async function deleteRecord(id) {
             if (!hasPerm('delete')) return alert('عفواً، ليس لديك صلاحية حذف السجلات!');
             if (!confirm('هل أنت متأكد من حذف هذا السجل نهائياً؟')) return;
+            const previous = records.find(r => Number(r.id) === Number(id));
             records = records.filter(r => Number(r.id) !== Number(id));
-            queueDelete(id);
-            saveToStorage(); 
+            stageOperation('del',id,previous);
+            await saveToStorage(); 
             refreshAll();
             showToast('تم حذف السجل بنجاح');
             flushPending();
@@ -2058,7 +2083,7 @@
             let title = 'تقرير الحالات المسجلة';
             let prefix = 'comp';
             let contentId = 'compTableBody';
-            let orientation = 'landscape';
+            let orientation = 'portrait';
             if (type === 'categories') {
                 title = 'إحصائيات التصنيفات';
                 prefix = 'cat';
@@ -2081,6 +2106,7 @@
             // Copy only report results, without duplicating the screen heading or filters.
             const container = type === 'comprehensive' ? content.closest('table') : content.parentElement;
             const printable = container.cloneNode(true);
+            printable.querySelectorAll('.no-print,button,input,select').forEach(control=>control.remove());
             printable.querySelectorAll('.report-summary').forEach(summary => summary.remove());
             const total = type === 'categories' ? getCategoryRangeRecords().length
                 : type === 'staff' ? getStaffRangeRecords().length : getFilteredComprehensiveList().length;
@@ -2129,19 +2155,19 @@
                         }
                         * { box-sizing: border-box; }
                         body { font-family: Tahoma, Arial, sans-serif; padding: 0; margin: 0; direction: rtl; color: #1e293b; font-size: 12px; }
-                        body { line-height: 1.7; }
-                        .report-summary { display: flex; justify-content: space-between; align-items: center; gap: 12px; border: 1px solid #99d5cc; border-radius: 8px; padding: 8px 12px; margin-bottom: 12px; background: #f0fdfa; color: #115e59; font-size: 13px; font-weight: bold; break-inside: avoid; break-after: avoid; }
-                        .report-summary-count { font-size: 22px; line-height: 1.3; }
-                        .report-heading { text-align: center; margin-bottom: 12px; break-inside: avoid; break-after: avoid; }
-                        .report-basmala { font-size: 18px; font-weight: bold; margin-bottom: 8px; }
-                        h2 { font-size: 16px; margin: 0 0 6px; }
-                        h3 { font-size: 14px; margin: 0 0 6px; }
+                        body { line-height: 1.25; }
+                        .report-summary { margin-top: 3mm; font-size: 10px; font-weight: bold; color: #115e59; break-inside: avoid; }
+                        .report-summary-count { font-size: 11px; margin-inline-start: 4px; }
+                        .report-heading { position: relative; text-align: center; padding: 0 15mm; margin-bottom: 3mm; break-inside: avoid; break-after: avoid; } .report-logo { position:absolute; right:0; top:0; width:13mm; height:13mm; object-fit:contain; } .report-line { display:block; margin:0; line-height:1.5; }
+                        .report-basmala { font-size: 15px; font-weight: bold; margin:0; }
+                        h2 { font-size: 13px; margin:0; }
+                        h3 { font-size: 11px; margin:0; }
                         .report-period { font-size: 12px; }
-                        .report-box { border: 1px solid #94a3b8; border-radius: 8px; padding: 8px; }
+                        .report-box { padding:0; }
                         .report-box div { max-height: none !important; overflow: visible !important; }
                         .no-print { display: none !important; }
                         table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 9px; }
-                        th, td { border: 1px solid #94a3b8; padding: 4px 3px; white-space: normal !important; overflow-wrap: anywhere; vertical-align: top; text-align: right; }
+                        th, td { border: 1px solid #94a3b8; padding: 2px 2px; line-height:1.3; white-space: normal !important; overflow-wrap: anywhere; vertical-align: top; text-align: right; }
                         th { background-color: #f1f5f9; font-weight: bold; }
                         .truncate, .whitespace-nowrap { white-space: normal !important; overflow: visible !important; text-overflow: clip !important; max-width: none !important; }
                         .report-date, [dir="ltr"] { direction: ltr; unicode-bidi: isolate; }
@@ -2157,13 +2183,13 @@
                 </head>
                 <body>
                     <header class="report-heading">
-                        <div class="report-basmala">بسم الله الرحمن الرحيم</div>
-                        <h2>سجل الواردين إلى العيادة — ${branch}</h2>
-                        <h3>${report.title}</h3>
-                        <div class="report-period">${report.period}</div>
+                        <img class="report-logo" src="${document.querySelector('.clinic-brand-right > img')?.src || new URL('icon.png',location.href).href}" alt="شعار سجل العيادة">
+                        <div class="report-basmala report-line">بسم الله الرحمن الرحيم</div>
+                        <h2 class="report-line">سجل الواردين إلى العيادة — ${branch}</h2>
+                        <h3 class="report-line">${report.title} | <span class="report-period">${report.period}</span></h3>
                     </header>
-                    <div class="report-summary"><span>إجمالي المسجلين</span><span class="report-summary-count">${report.total}</span></div>
                     <div class="report-box">${report.content}</div>
+                    <div class="report-summary">إجمالي الحالات المسجلة: <span class="report-summary-count">${report.total}</span></div>
                     <script>
                         window.onload = function() { window.print(); };
                     <\/script>
@@ -2201,7 +2227,7 @@
             const file = event.target.files[0];
             if (!file) return;
             const reader = new FileReader();
-            reader.onload = function(e) {
+            reader.onload = async function(e) {
                 try {
                     const imported = JSON.parse(e.target.result);
                     if (Array.isArray(imported)) {
@@ -2214,7 +2240,7 @@
                                 if (!l || (Number(r.updatedAt) || 0) >= (Number(l.updatedAt) || 0)) { map.set(k, r); queueUpsert(r.id); }
                             });
                             records = Array.from(map.values());
-                            saveToStorage(); 
+                            await saveToStorage(); 
                             refreshAll();
                             showToast('تمت استعادة البيانات بنجاح'); 
                             flushPending();
@@ -2231,7 +2257,7 @@
             if (!confirm('تحذير: سيتم مسح كافة سجلات العيادة نهائياً! هل أنت متأكد؟')) return;
             records.forEach(r => queueDelete(r.id));
             records = []; 
-            saveToStorage(); 
+            await saveToStorage(); 
             refreshAll();
             showToast('تم مسح كافة البيانات'); 
             flushPending();
@@ -2307,15 +2333,71 @@
             if (!key || /[.#$\[\]\/]/.test(key) || !canUseBranch(branch)) throw Object.assign(new Error('فرع أو سجل غير مسموح'),{code:'PERMISSION_DENIED'});
             return ref(database, 'clinic_records/'+branch+'/'+key);
         }
+        const OFFLINE_GRACE_MS = 24*60*60*1000;
+        let offlineExpiryTimer;
+        async function serverRequest(path,options={}) {
+            const user=auth.currentUser;if(!user)throw Object.assign(new Error('سجل الدخول أولًا.'),{code:'PERMISSION_DENIED'});
+            const token=await user.getIdToken(),controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),12000);
+            try {
+                const response=await fetch(firebaseConfig.databaseURL+'/'+path+'.json?auth='+encodeURIComponent(token),{...options,cache:'no-store',signal:controller.signal});
+                if(response.status===401||response.status===403)throw Object.assign(new Error('الحساب أو الفرع أو الصلاحية لم يعد مسموحًا.'),{code:'PERMISSION_DENIED'});
+                if(!response.ok && response.status!==412)throw new Error('تعذر الاتصال بالسحابة ('+response.status+').');
+                return response;
+            } finally {clearTimeout(timeout);}
+        }
+        async function rememberSession(user,profile,settings) {
+            await clinicStore.save(user.uid,'session',{profile:{...profile,uid:user.uid,email:user.email,username:user.email},settings,verifiedAt:Date.now()});
+        }
+        async function offlineSession(user) {
+            const saved=await clinicStore.load(user.uid,'session');
+            if(!saved?.profile?.active || !saved.settings || Date.now()-saved.verifiedAt>OFFLINE_GRACE_MS) {
+                await window.cloudSessionChanged(null);window.cloudAuthNotice('يلزم الاتصال بالإنترنت للتحقق من الحساب. البيانات غير المتزامنة محفوظة.');return false;
+            }
+            await window.cloudSessionChanged(saved.profile);await window.cloudSettingsChanged(saved.settings);
+            clearTimeout(offlineExpiryTimer);
+            offlineExpiryTimer=setTimeout(()=>{if(!navigator.onLine){window.cloudSessionChanged(null);window.cloudAuthNotice('انتهت مهلة العمل دون إنترنت؛ اتصل للتحقق من صلاحياتك. العمليات محفوظة.');}},Math.max(1,saved.verifiedAt+OFFLINE_GRACE_MS-Date.now()));
+            syncState='offline';updateSyncStatus();return true;
+        }
+        async function validateAuthority() {
+            const user=auth.currentUser;if(!user || !navigator.onLine)throw new Error('يلزم اتصال بالخادم قبل رفع العمليات.');
+            const profile=await (await serverRequest('clinic_users/'+user.uid)).json();
+            clearTimeout(offlineExpiryTimer);
+            if(!profile?.active){await clinicStore.save(user.uid,'session',null);await window.cloudSessionChanged(null);throw Object.assign(new Error('الحساب معطل أو غير مفعّل.'),{code:'PERMISSION_DENIED'});}
+            const settings=await (await serverRequest('clinic_settings')).json();
+            const previous=currentUser;currentUser={...profile,uid:user.uid,email:user.email,username:user.email};
+            if(previous?.role==='admin' && currentUser.role!=='admin'){usersList=[];clearDataSubscriptions();renderUsersSettings();}
+            await rememberSession(user,profile,settings);
+            if(settings) {branchDirectory=settings.branches||{};branchList=Object.values(branchDirectory).filter(b=>b.active!==false).map(b=>b.name);}
+            if(!hasPerm('view') || !canUseBranch(activeBranchId)) {records=[];applyPermissions();throw Object.assign(new Error('سُحب إذن الاطلاع أو الوصول إلى الفرع؛ العمليات المحلية باقية دون رفع.'),{code:'PERMISSION_DENIED'});}
+            applyPermissions();return currentUser;
+        }
+        async function commitOperation(operation,branch) {
+            requireSession('view');if(!canUseBranch(branch))throw Object.assign(new Error('الفرع غير مسموح.'),{code:'PERMISSION_DENIED'});
+            const path='clinic_records/'+branch+'/'+operation.id;
+            const response=await serverRequest(path,{headers:{'X-Firebase-ETag':'true'}}),remote=await response.json(),etag=response.headers.get('ETag');
+            if(!etag)throw new Error('لم يرجع الخادم رمز النسخة؛ أُوقفت الكتابة لحماية البيانات.');
+            if(remote?.revision===operation.operationId)return {applied:true};
+            if(operation.kind==='del' && !remote)return {applied:true};
+            const version=remote?.revision||remote?.updatedAt||null;
+            if(version!==operation.baseVersion)return {conflict:true,remote};
+            requireSession(operation.kind==='del'?'delete':remote?'edit':'add');
+            const data=operation.kind==='del'?null:{...operation.record,branchId:branch,branch:branchDirectory[branch].name,revision:operation.operationId,updatedByUid:auth.currentUser.uid};
+            const written=await serverRequest(path,{method:'PUT',headers:{'Content-Type':'application/json','if-match':etag},body:JSON.stringify(data)});
+            if(written.status===412)return {conflict:true,remote:await written.json()};
+            return {applied:true};
+        }
+
         async function listenToProfile(user) {
             const epoch=++sessionEpoch;
             clearDataSubscriptions(); if(profileUnsubscribe) profileUnsubscribe(); profileUnsubscribe=null;
             await window.cloudSessionChanged(null);
             if (!user) { authMessage(''); return; }
+            if(!navigator.onLine) await offlineSession(user);
             profileUnsubscribe=onValue(ref(database,'clinic_users/'+user.uid),async snapshot=>{
                 if(epoch!==sessionEpoch) return;
                 clearDataSubscriptions();
-                const value=snapshot.val();
+                if(!navigator.onLine){await offlineSession(user);return;}
+                const value=await (await serverRequest('clinic_users/'+user.uid)).json();
                 if(!value) {
                     await window.cloudSessionChanged(null);
                     if(user.email?.toLowerCase()===INITIAL_ADMIN_EMAIL) window.cloudAuthNotice(user.emailVerified ? 'اكتب الاسم الرباعي لتفعيل حساب المدير الأول.' : 'تحقق من بريد المدير أولًا لتفعيل الحساب.', user.emailVerified ? 'setup' : 'verify');
@@ -2325,14 +2407,16 @@
                 if(value.active!==true) { await window.cloudSessionChanged(null); window.cloudAuthNotice('هذا الحساب معطل. تواصل مع مدير النظام.'); return; }
                 await window.cloudSessionChanged({...value,uid:user.uid,email:user.email,username:user.email});
                 if(epoch!==sessionEpoch) return;
-                subscriptions.push(onValue(ref(database,'clinic_settings'),snapshot=>window.cloudSettingsChanged(snapshot.val()),failure));
+                subscriptions.push(onValue(ref(database,'clinic_settings'),async snapshot=>{const settings=snapshot.val();await window.cloudSettingsChanged(settings);if(navigator.onLine && settings)await rememberSession(user,value,settings);},failure));
                 if(value.role==='admin') subscriptions.push(onValue(ref(database,'clinic_users'),snapshot=>{
-                    const users=[];snapshot.forEach(child=>users.push({...child.val(),uid:child.key}));window.cloudDirectoryChanged(users);
-                },failure));
+                    const users=[];snapshot.forEach(child=>{users.push({...child.val(),uid:child.key});return false;});window.cloudDirectoryChanged(users);
+                },error=>{document.getElementById('userDirectoryStatus').textContent='تعذر تحميل المستخدمين: '+firebaseErrorMessage(error);}));
             }, async error=>{await window.cloudSessionChanged(null); failure(error);});
         }
         window.firebaseClinic = {
             ready: true,
+            validateAuthority,commitOperation,
+            async refreshUsers(){requireSession('view');if(!isAdministrator())throw new Error('مدير فقط');const result=await (await serverRequest('clinic_users')).json();window.cloudDirectoryChanged(Object.entries(result||{}).map(([uid,p])=>({...p,uid})));},
             async login(email,password) { await setPersistence(auth,browserLocalPersistence); return signInWithEmailAndPassword(auth,email,password); },
             async logout() { ++sessionEpoch; clearDataSubscriptions(); if(profileUnsubscribe)profileUnsubscribe(); profileUnsubscribe=null; await signOut(auth); },
             async resetPassword(email) { return sendPasswordResetEmail(auth,email); },
@@ -2371,7 +2455,7 @@
                 const {uid:ignored,...data}=profile;
                 await set(ref(database,'clinic_users/'+uid),data);
             },
-            async setUserActive(uid,active) { requireSession('view'); if(!isAdministrator() || uid===auth.currentUser.uid) throw Object.assign(new Error('غير مسموح'),{code:'PERMISSION_DENIED'}); await update(ref(database,'clinic_users/'+uid),{active}); },
+            async setUserActive(uid,active) { requireSession('view'); if(!isAdministrator() || uid===auth.currentUser.uid || usersList.find(u=>u.uid===uid)?.email?.toLowerCase()===INITIAL_ADMIN_EMAIL) throw Object.assign(new Error('غير مسموح'),{code:'PERMISSION_DENIED'}); await update(ref(database,'clinic_users/'+uid),{active}); },
             async saveRecord(record) {
                 requireSession('view');
                 const target=recordRef(record.id);
@@ -2380,12 +2464,7 @@
                 const data=JSON.parse(JSON.stringify({...record,branchId:activeBranchId,branch:branchDirectory[activeBranchId].name,updatedAt:Number(record.updatedAt)||Date.now()}));
                 await set(target,data);return true;
             },
-            async loadRecords() {
-                requireSession('view');
-                if(!activeBranchId) return [];
-                const snapshot=await get(ref(database,'clinic_records/'+activeBranchId));
-                const output=[];snapshot.forEach(child=>output.push({...child.val(),id:child.val().id||Number(child.key)||child.key}));return output;
-            },
+            async loadRecords() {requireSession('view');if(!canUseBranch(activeBranchId))throw Object.assign(new Error('فرع غير مسموح'),{code:'PERMISSION_DENIED'});const data=await (await serverRequest('clinic_records/'+activeBranchId)).json();return Object.entries(data||{}).map(([id,r])=>({...r,id:r.id||Number(id)}));},
             async deleteRecord(id) { requireSession('delete'); await remove(recordRef(id));return true; },
             async migrateLegacy(local) {
                 requireSession('view'); if(!isAdministrator()) throw Object.assign(new Error('مدير فقط'),{code:'PERMISSION_DENIED'});
