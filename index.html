@@ -18,7 +18,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
     <!-- مكتبة SheetJS لتصدير ملفات Excel -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-
+    
     <style>
         body {
             font-family: 'Tajawal', sans-serif;
@@ -222,7 +222,7 @@
             <h2 class="text-base font-bold flex items-center gap-2">⚙️ إعدادات النظام</h2>
             <button onclick="toggleSidebar(false)" class="text-white hover:text-slate-200 text-2xl font-bold">&times;</button>
         </div>
-
+        
         <div class="p-4 overflow-y-auto flex-1 space-y-5 custom-scrollbar text-sm">
             <!-- 1. تغيير كلمة المرور للمستخدم الحالي -->
             <div class="border border-slate-200 rounded-xl p-3.5 bg-slate-50">
@@ -255,7 +255,7 @@
                         <input type="text" id="newUserUsername" placeholder="اسم الدخول..." class="border border-slate-300 rounded-lg px-2 py-1 text-xs outline-none focus:border-teal-600">
                         <input type="password" id="newUserPassword" placeholder="كلمة المرور..." class="border border-slate-300 rounded-lg px-2 py-1 text-xs outline-none focus:border-teal-600">
                     </div>
-
+                    
                     <div class="pt-1">
                         <span class="block text-[11px] font-bold text-slate-600 mb-1">الصلاحيات:</span>
                         <div class="grid grid-cols-2 gap-1.5 text-xs">
@@ -380,6 +380,13 @@
 
     <!-- المحتوى الرئيسي -->
     <main class="max-w-7xl mx-auto px-4 py-6 flex-1 w-full">
+
+
+        <div id="activeUserIdentity" class="hidden no-print bg-teal-50 border border-teal-200 rounded-xl px-4 py-3 mb-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm" aria-live="polite">
+            <span>المستخدم: <b id="activeUserFullName" class="text-teal-900"></b></span>
+            <span>الدور: <b id="activeUserRole" class="text-teal-900"></b></span>
+            <span>العيادة / المركز / الفرع: <b id="activeUserFacility" class="text-teal-900"></b></span>
+        </div>
 
         <!-- إشعار الحفظ -->
         <div id="toast" class="fixed bottom-5 left-5 bg-emerald-700 text-white px-6 py-3 rounded-xl shadow-2xl transform translate-y-24 opacity-0 transition-all duration-300 z-50 font-bold flex items-center gap-2">
@@ -547,7 +554,7 @@
             <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
                 <div class="flex flex-col md:flex-row justify-between items-center gap-4 mb-4">
                     <h2 class="text-xl font-bold text-teal-800">📋 سجل الحالات المسجلة</h2>
-
+                    
                     <div class="flex flex-wrap items-center gap-2 w-full md:w-auto">
                         <input type="text" id="searchInput" oninput="renderRecordsTable()" placeholder="🔍 بحث بالاسم، المناوب، التشخيص..." class="flex-1 md:w-72 border border-slate-300 rounded-xl px-4 py-2 text-sm outline-none focus:border-teal-600 font-bold">
                         <input type="date" id="filterDateInput" onclick="openPicker(this)" onfocus="openPicker(this)" onchange="renderRecordsTable()" class="border border-slate-300 rounded-xl px-3 py-2 text-sm outline-none focus:border-teal-600 font-bold">
@@ -575,6 +582,7 @@
                                 <th class="p-3">الترقيد</th>
                                 <th class="p-3">التحويل</th>
                                 <th class="p-3">ملاحظات</th>
+                                <th class="p-3">اسم المسجل</th>
                                 <th class="p-3 text-center">إجراءات</th>
                             </tr>
                         </thead>
@@ -588,7 +596,7 @@
 
         <!-- ==================== 3. شاشة التقارير والتصدير ==================== -->
         <section id="reportsTab" class="tab-content hidden space-y-6">
-
+            
             <!-- 1. التقرير الشامل والموسع (A4 أفقي - من وإلى تاريخ) -->
             <div id="printSectionComprehensive" class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 flex flex-col justify-between">
                 <div class="report-basmala">بسم الله الرحمن الرحيم</div>
@@ -887,7 +895,7 @@
                 sessionStorage.setItem(USER_SESSION_KEY, JSON.stringify(found));
                 document.getElementById('loginModal').classList.add('hidden');
                 applyPermissions();
-                showToast(`أهلاً بك يا ${found.name}`);
+                showToast(`أهلاً بك يا ${getUserDisplayName(found)} — ${found.role === 'admin' ? 'مدير النظام' : 'مستخدم'}`);
             } else {
                 alert('اسم المستخدم أو كلمة المرور غير صحيحة!');
             }
@@ -910,6 +918,7 @@
         function performLogout() {
             sessionStorage.removeItem(USER_SESSION_KEY);
             currentUser = null;
+            updateUserIdentity();
             toggleSidebar(false);
             document.getElementById('loginModal').classList.remove('hidden');
         }
@@ -943,16 +952,37 @@
             return !!(currentUser.permissions && currentUser.permissions[permName]);
         }
 
+        function getUserDisplayName(user = currentUser) {
+            if (!user) return '-';
+            const saved = usersList.find(item => String(item.username).toLowerCase() === String(user.username).toLowerCase());
+            return String(saved?.name || user.name || user.username || '-');
+        }
+
+        function getRecordedByDisplay(record) {
+            if (record.recordedByName) return String(record.recordedByName);
+            const saved = usersList.find(item => String(item.username).toLowerCase() === String(record.recordedBy || '').toLowerCase());
+            return String(saved?.name || record.recordedBy || '-');
+        }
+
+        function updateUserIdentity() {
+            const box = document.getElementById('activeUserIdentity');
+            box.classList.toggle('hidden', !currentUser);
+            document.getElementById('activeUserFullName').textContent = currentUser ? getUserDisplayName() : '';
+            document.getElementById('activeUserRole').textContent = currentUser ? (currentUser.role === 'admin' ? 'مدير النظام' : 'مستخدم') : '';
+            document.getElementById('activeUserFacility').textContent = localStorage.getItem(ACTIVE_BRANCH_KEY) || branchList[0] || 'المركز الرئيسي';
+        }
+
         function applyPermissions() {
             if (!currentUser) return;
-            document.getElementById('drawerUsername').innerText = currentUser.name;
-
+            updateUserIdentity();
+            document.getElementById('drawerUsername').innerText = getUserDisplayName();
+            
             const perms = [];
             if (hasPerm('add')) perms.push('إضافة');
             if (hasPerm('edit')) perms.push('تعديل');
             if (hasPerm('delete')) perms.push('حذف');
             if (hasPerm('view')) perms.push('اطلاع');
-
+            
             document.getElementById('drawerPermissionsSummary').innerText = `الصلاحيات: ${perms.join(' - ') || 'لا توجد'}`;
 
             const saveBtn = document.getElementById('saveBtn');
@@ -1038,7 +1068,7 @@
         function renderBranchesSettings() {
             const list = document.getElementById('branchesListSettings');
             const active = localStorage.getItem(ACTIVE_BRANCH_KEY) || branchList[0];
-
+            
             list.innerHTML = branchList.map((b, idx) => `
                 <div class="flex items-center justify-between bg-white p-2 rounded-lg border ${b === active ? 'border-teal-500 bg-teal-50/30' : 'border-slate-200'}">
                     <label class="flex items-center gap-2 cursor-pointer flex-1">
@@ -1069,13 +1099,13 @@
             const oldName = branchList[idx];
             const newName = prompt('أدخل الاسم الجديد للعيادة / الفرع:', oldName);
             if (!newName || newName.trim() === '' || newName.trim() === oldName) return;
-
+            
             const trimmed = newName.trim();
             if (branchList.includes(trimmed)) return alert('هذا الاسم موجود بالفعل!');
-
+            
             branchList[idx] = trimmed;
             localStorage.setItem(BRANCH_KEY, JSON.stringify(branchList));
-
+            
             const currentActive = localStorage.getItem(ACTIVE_BRANCH_KEY) || branchList[0];
             if (currentActive === oldName) {
                 changeActiveBranch(trimmed);
@@ -1103,6 +1133,7 @@
         function changeActiveBranch(val) {
             localStorage.setItem(ACTIVE_BRANCH_KEY, val);
             document.getElementById('headerClinicBranch').innerText = val;
+            updateUserIdentity();
             renderBranchesSettings();
             showToast(`العيادة النشطة: ${val}`);
         }
@@ -1124,9 +1155,10 @@
             staffList = JSON.parse(localStorage.getItem(STAFF_KEY)) || DEFAULT_STAFF;
             categoryData = JSON.parse(localStorage.getItem(CATS_KEY)) || { male: DEFAULT_MALE_CATS, female: DEFAULT_FEMALE_CATS };
             branchList = JSON.parse(localStorage.getItem(BRANCH_KEY)) || DEFAULT_BRANCHES;
-
+            
             const activeBranch = localStorage.getItem(ACTIVE_BRANCH_KEY) || branchList[0];
             document.getElementById('headerClinicBranch').innerText = activeBranch;
+            updateUserIdentity();
 
             populateStaffDropdowns();
             renderBranchesSettings();
@@ -1138,7 +1170,7 @@
         function populateStaffDropdowns() {
             const formStaff = document.getElementById('staffName');
             const reportStaff = document.getElementById('staffReportName');
-
+            
             const currentSelected = formStaff.value;
             formStaff.innerHTML = '<option value="" disabled selected>-- اختر المناوب --</option>';
             staffList.forEach(s => {
@@ -1257,13 +1289,13 @@
             el.textContent = txt;
         }
 
-        function refreshAll() {
-            updateBadge();
-            updateSerialNumber();
-            renderRecordsTable();
-            updateCategoryRangePreview();
-            updateStaffReportPreview();
-            renderComprehensiveReportTable();
+        function refreshAll() { 
+            updateBadge(); 
+            updateSerialNumber(); 
+            renderRecordsTable(); 
+            updateCategoryRangePreview(); 
+            updateStaffReportPreview(); 
+            renderComprehensiveReportTable(); 
         }
 
         async function flushPending() {
@@ -1343,15 +1375,17 @@
             const today = todayLocal();
             // وضع تاريخ اليوم كقيمة افتراضية لجميع حقول التاريخ في النظام
             const dateInputs = [
-                'visitDate', 'filterDateInput', 'admitFrom', 'admitTo',
-                'compStartDate', 'compEndDate',
-                'catStartDate', 'catEndDate',
+                'visitDate', 'filterDateInput', 
+                'compStartDate', 'compEndDate', 
+                'catStartDate', 'catEndDate', 
                 'staffStartDate', 'staffEndDate'
             ];
             dateInputs.forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.value = today;
             });
+            document.getElementById('admitFrom').value = '';
+            document.getElementById('admitTo').value = '';
         }
 
         function resetCompDates() {
@@ -1427,8 +1461,8 @@
             if (isEditing && !hasPerm('edit')) return alert('عفواً، ليس لديك صلاحية تعديل السجلات!');
             if (!isEditing && !hasPerm('add')) return alert('عفواً، ليس لديك صلاحية إضافة سجلات جديدة!');
 
-            const confirmMsg = isEditing
-                ? 'هل أنت متأكد من حفظ التعديلات على هذا السجل؟'
+            const confirmMsg = isEditing 
+                ? 'هل أنت متأكد من حفظ التعديلات على هذا السجل؟' 
                 : 'هل أنت متأكد من حفظ بيانات المريض في السجل الطبي؟';
             if (!confirm(confirmMsg)) return;
 
@@ -1467,6 +1501,7 @@
                     transferReason: document.getElementById('transferReason').value.trim(),
                     notes: document.getElementById('notes').value.trim(),
                     recordedBy: currentUser ? currentUser.username : 'unknown',
+                    recordedByName: currentUser ? getUserDisplayName() : '-',
                     updatedAt: Date.now()
                 };
 
@@ -1497,8 +1532,8 @@
             document.getElementById('diagnosis').value = '';
             document.getElementById('pharmacyTreatment').value = '';
             document.getElementById('labTests').value = '';
-            document.getElementById('admitFrom').value = todayLocal();
-            document.getElementById('admitTo').value = todayLocal();
+            document.getElementById('admitFrom').value = '';
+            document.getElementById('admitTo').value = '';
             document.getElementById('transferTo').value = '';
             document.getElementById('transferReason').value = '';
             document.getElementById('notes').value = '';
@@ -1517,9 +1552,9 @@
         function renderRecordsTable() {
             const tbody = document.getElementById('recordsTableBody');
             if (!tbody) return;
-
+            
             if (!hasPerm('view')) {
-                tbody.innerHTML = `<tr><td colspan="15" class="text-center py-8 text-amber-700 font-bold bg-amber-50">🔒 عذراً، ليس لديك صلاحية الاطلاع على السجل العام</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="16" class="text-center py-8 text-amber-700 font-bold bg-amber-50">🔒 عذراً، ليس لديك صلاحية الاطلاع على السجل العام</td></tr>`;
                 return;
             }
 
@@ -1527,7 +1562,7 @@
             const filterDate = document.getElementById('filterDateInput').value;
 
             let filtered = records.filter(r => {
-                const matchSearch = !search ||
+                const matchSearch = !search || 
                     String(r.patientName || '').toLowerCase().includes(search) ||
                     String(r.staff || '').toLowerCase().includes(search) ||
                     String(r.category || '').toLowerCase().includes(search) ||
@@ -1548,7 +1583,7 @@
             const canDelete = hasPerm('delete');
 
             tbody.innerHTML = filtered.map(raw => {
-                const r = {...raw};
+                const r = {...raw, recordedByDisplay: getRecordedByDisplay(raw)};
                 for (const k in r) if (typeof r[k] === 'string') r[k] = esc(r[k]);
                 const admitInfo = (r.admitFrom || r.admitTo) ? `من: ${r.admitFrom || '-'}<br>إلى: ${r.admitTo || '-'}` : '-';
                 const transferInfo = (r.transferTo || r.transferReason) ? `${r.transferTo || ''}<br><span class="text-xs text-slate-500">${r.transferReason || ''}</span>` : '-';
@@ -1569,6 +1604,7 @@
                         <td class="p-3 text-xs whitespace-nowrap">${admitInfo}</td>
                         <td class="p-3 text-xs">${transferInfo}</td>
                         <td class="p-3 max-w-xs truncate" title="${r.notes}">${r.notes || '-'}</td>
+                        <td class="p-3 whitespace-nowrap font-medium">${r.recordedByDisplay}</td>
                         <td class="p-3 whitespace-nowrap text-center space-x-1 space-x-reverse">
                             ${canEdit ? `<button onclick="editRecord(${r.id})" class="text-blue-600 hover:bg-blue-50 p-1.5 rounded-lg font-bold text-xs" title="تعديل">✏️</button>` : ''}
                             ${canDelete ? `<button onclick="deleteRecord(${r.id})" class="text-red-600 hover:bg-red-50 p-1.5 rounded-lg font-bold text-xs" title="حذف">🗑️</button>` : ''}
@@ -1615,7 +1651,7 @@
             if (!confirm('هل أنت متأكد من حذف هذا السجل نهائياً؟')) return;
             records = records.filter(r => Number(r.id) !== Number(id));
             queueDelete(id);
-            saveToStorage();
+            saveToStorage(); 
             refreshAll();
             showToast('تم حذف السجل بنجاح');
             flushPending();
@@ -1695,7 +1731,7 @@
             }
 
             tbody.innerHTML = list.map(raw => {
-                const r = {...raw};
+                const r = {...raw, recordedByDisplay: getRecordedByDisplay(raw)};
                 for (const k in r) if (typeof r[k] === 'string') r[k] = esc(r[k]);
                 const admit = (r.admitFrom || r.admitTo) ? `${r.admitFrom || '-'} إلى ${r.admitTo || '-'}` : '-';
                 const transfer = (r.transferTo || r.transferReason) ? `${r.transferTo || '-'} (${r.transferReason || '-'})` : '-';
@@ -1717,7 +1753,7 @@
                         <td class="p-2 border-l border-slate-200">${admit}</td>
                         <td class="p-2 border-l border-slate-200 max-w-xs truncate" title="${transfer}">${transfer}</td>
                         <td class="p-2 border-l border-slate-200 max-w-xs truncate" title="${r.notes}">${r.notes || '-'}</td>
-                        <td class="p-2 text-slate-500">${r.recordedBy || '-'}</td>
+                        <td class="p-2 text-slate-500">${r.recordedByDisplay}</td>
                     </tr>
                 `;
             }).join('');
@@ -1745,7 +1781,7 @@
                 "جهة التحويل": r.transferTo || '-',
                 "سبب التحويل": r.transferReason || '-',
                 "الملاحظات": r.notes || '-',
-                "مدخل البيانات": r.recordedBy || '-'
+                "مدخل البيانات": getRecordedByDisplay(r)
             }));
 
             const sDate = document.getElementById('compStartDate')?.value || 'البداية';
@@ -1983,7 +2019,7 @@
                 <body>
                     <header class="report-heading">
                         <div class="report-basmala">بسم الله الرحمن الرحيم</div>
-                        <h2>سجل الواردين إلى العيادة (${branch})</h2>
+                        <h2>سجل الواردين إلى العيادة — ${branch}</h2>
                         <h3>${report.title}</h3>
                         <div class="report-period">${report.period}</div>
                     </header>
@@ -2035,9 +2071,9 @@
                                 if (!l || (Number(r.updatedAt) || 0) >= (Number(l.updatedAt) || 0)) { map.set(k, r); queueUpsert(r.id); }
                             });
                             records = Array.from(map.values());
-                            saveToStorage();
+                            saveToStorage(); 
                             refreshAll();
-                            showToast('تمت استعادة البيانات بنجاح');
+                            showToast('تمت استعادة البيانات بنجاح'); 
                             flushPending();
                         }
                     }
@@ -2050,10 +2086,10 @@
             if (currentUser && currentUser.role !== 'admin') return alert('عفواً، مسح البيانات متاح لمدير النظام فقط!');
             if (!confirm('تحذير: سيتم مسح كافة سجلات العيادة نهائياً! هل أنت متأكد؟')) return;
             records.forEach(r => queueDelete(r.id));
-            records = [];
-            saveToStorage();
+            records = []; 
+            saveToStorage(); 
             refreshAll();
-            showToast('تم مسح كافة البيانات');
+            showToast('تم مسح كافة البيانات'); 
             flushPending();
         }
 
@@ -2073,10 +2109,10 @@
             }
 
             if (tabId === 'recordsTab') renderRecordsTable();
-            if (tabId === 'reportsTab') {
-                updateCategoryRangePreview();
-                updateStaffReportPreview();
-                renderComprehensiveReportTable();
+            if (tabId === 'reportsTab') { 
+                updateCategoryRangePreview(); 
+                updateStaffReportPreview(); 
+                renderComprehensiveReportTable(); 
             }
         }
 

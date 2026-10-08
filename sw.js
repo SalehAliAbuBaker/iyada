@@ -1,4 +1,4 @@
-const CACHE = 'clinic-shell-v1';
+const CACHE = 'clinic-shell-v2';
 const SHELL = ['./', './index.html', './icon.png', './icon-192.png', './clinic.webmanifest'];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(SHELL)));
