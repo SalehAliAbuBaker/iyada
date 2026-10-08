@@ -93,8 +93,6 @@
         .clinic-brand-right { display: flex; align-items: center; gap: 12px; min-width: 0; }
         .clinic-brand-text { min-width: 0; }
         .clinic-branch-name { display: block; font-size: 14px; font-weight: bold; color: #ccfbf1; overflow-wrap: anywhere; }
-        .foundation-logo-box { flex: 0 0 94px; background: transparent; padding: 4px; }
-        .foundation-logo { display: block; width: 86px; height: 86px; object-fit: contain; }
         .clinic-help-section { padding: 14px; border: 1px solid #cbd5e1; border-radius: 12px; background: #fff; }
         .clinic-help-section summary, .clinic-help-section > button { width: 100%; min-height: 44px; display: flex; align-items: center; gap: 8px; font-weight: bold; font-size: 14px; color: #115e59; cursor: pointer; text-align: right; }
         .clinic-support-links { display: grid; gap: 8px; padding: 8px 0; }
@@ -109,13 +107,11 @@
         @media screen and (max-width: 640px) {
             .clinic-brand-row { gap: 8px; }
             .clinic-brand-right { gap: 6px; }
-            .clinic-brand-right > img { width: 38px !important; height: 38px !important; }
+            .clinic-brand-right > img { width: 76px !important; height: 76px !important; }
             .clinic-brand-right > button { padding: 6px; }
             .clinic-brand-text h1 { font-size: 16px !important; }
             .clinic-brand-text p { font-size: 10px; }
             .clinic-branch-name { font-size: 12px; }
-            .foundation-logo-box { flex-basis: 68px; border-radius: 8px; }
-            .foundation-logo { width: 60px; height: 60px; }
         }
         input[type="date"] {
             cursor: pointer;
@@ -360,7 +356,7 @@
                 <button type="button" onclick="showClinicAbout()"><span aria-hidden="true">ℹ️</span> حول التطبيق</button>
             </section>
 
-            <p class="clinic-version text-center text-slate-500" style="font-size:11px;">سجل العيادة — الإصدار 1.1.0</p>
+            <p class="clinic-version text-center text-slate-500" style="font-size:11px;">سجل العيادة — الإصدار 1.2.0</p>
 
             <!-- بطاقة المستخدم الحالي -->
             <div class="p-2.5 bg-slate-100 rounded-xl text-xs space-y-1">
@@ -384,16 +380,13 @@
                     <button type="button" onclick="toggleSidebar(true)" class="p-2 bg-teal-700 hover:bg-teal-600 rounded-xl transition flex items-center justify-center shadow" title="فتح القائمة والإعدادات" aria-label="فتح القائمة والإعدادات">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 6h16M4 12h16M4 18h16" /></svg>
                     </button>
-                    <img src="icon.png" alt="أيقونة سجل العيادة" width="48" height="48" style="width:48px;height:48px;border-radius:12px;flex-shrink:0;object-fit:contain;">
+                    <img src="icon.png" alt="أيقونة سجل العيادة" width="88" height="88" style="width:88px;height:88px;border-radius:12px;flex-shrink:0;object-fit:contain;">
                     <div class="clinic-brand-text">
                         <h1 class="text-xl font-extrabold">سجل العيادة</h1>
                         <span id="headerClinicBranch" class="clinic-branch-name">المركز الرئيسي</span>
                         <p class="text-teal-200 text-xs">نظام التسهيل الطبي وإصدار التقارير الإحصائية</p>
-                        <p class="clinic-version text-teal-200" style="font-size:10px;line-height:1.5;">الإصدار 1.1.0</p>
+                        <p class="clinic-version text-teal-200" style="font-size:10px;line-height:1.5;">الإصدار 1.2.0</p>
                     </div>
-                </div>
-                <div class="foundation-logo-box">
-                    <img src="foundation-logo.png" width="90" height="90" alt="شعار مؤسسة الرأفة للتنمية التعليمية والاجتماعية" class="foundation-logo">
                 </div>
             </div>
             <nav class="flex flex-wrap items-center gap-2 bg-teal-900/50 p-1.5 rounded-xl">
@@ -427,7 +420,7 @@
     <dialog id="clinicAboutDialog" class="clinic-about-dialog no-print" dir="rtl" aria-labelledby="clinicAboutTitle" aria-describedby="clinicAboutDescription">
         <img src="icon.png" alt="أيقونة سجل العيادة" width="76" height="76">
         <h2 id="clinicAboutTitle">سجل العيادة</h2>
-        <p class="clinic-version" style="font-size:11px;margin-bottom:10px;">الإصدار 1.1.0</p>
+        <p class="clinic-version" style="font-size:11px;margin-bottom:10px;">الإصدار 1.2.0</p>
         <p id="clinicAboutDescription">تطبيق لتسجيل الحالات الواردة إلى العيادة، ومتابعة بيانات المرضى والمناوبين، وتنظيم الفروع، وإصدار التقارير والإحصائيات وطباعتها وتصديرها.</p>
         <button type="button" onclick="document.getElementById('clinicAboutDialog').close()" autofocus>إغلاق</button>
     </dialog>
@@ -1320,7 +1313,7 @@
         }
 
         // ==================== المزامنة مع Google Firestore ====================
-        const PENDING_KEY = 'clinic_pending_v1', INIT_KEY = 'clinic_initial_push_v1';
+        const PENDING_KEY = 'clinic_pending_v1', INIT_KEY = 'clinic_initial_push_clinic0129_v1';
         let appLoaded = false, syncState = 'idle', syncError = '', flushing = false, syncing = false;
 
         function esc(v) { return String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
@@ -1412,8 +1405,9 @@
                 if (manual) showToast(ok ? '✅ تمت المزامنة مع السحابة' : '⚠️ تعذر رفع بعض السجلات', !ok);
             } catch (e) {
                 syncState = 'error';
-                if (manual) showToast('⚠️ خطأ أثناء المزامنة', true);
-            } finally { syncing = false; }
+                syncError = e && e.code === 'PERMISSION_DENIED' ? 'لا تسمح قواعد Firebase بالوصول إلى السجلات' : 'تعذر الاتصال بقاعدة البيانات';
+                if (manual) showToast('⚠️ ' + syncError, true);
+            } finally { syncing = false; updateSyncStatus(); }
         }
 
         // ==================== التهيئة الافتراضية لجميع حقول التواريخ ====================
@@ -2191,71 +2185,51 @@
         window.addEventListener('online', () => syncNow());
     </script>
 
-    <!-- اتصال Firebase Firestore REST المتوافق تماماً -->
+    <!-- Firebase: مشروع العيادة وقاعدة البيانات الجديدة -->
     <script type="module">
-        const PROJECT = "iyada-81260", API_KEY = "AIzaSyC2qYG1-ipWBbYV9Ln689Ft68YNPA3TlTM", COLL = "clinic_patients";
-        const BASE = `https://firestore.googleapis.com/v1/projects/${PROJECT}/databases/(default)/documents`;
-        let idToken = null, lastAuthTry = 0;
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-app.js";
+        import { getAnalytics, isSupported } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-analytics.js";
+        import { getDatabase, ref, get, set, remove } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-database.js";
 
-        async function http(url, opts = {}, ms = 20000) {
-            const ctl = new AbortController(); const t = setTimeout(() => ctl.abort(), ms);
-            try { return await fetch(url, { ...opts, signal: ctl.signal }); }
-            catch (e) {
-                const aborted = e && e.name === 'AbortError';
-                throw Object.assign(new Error(aborted ? 'انتهت المهلة' : 'تعذر الاتصال بقاعدة البيانات'), { code: aborted ? 'timeout' : 'unavailable' });
-            } finally { clearTimeout(t); }
-        }
-
-        async function anonSignIn() {
-            lastAuthTry = Date.now();
-            const r = await http(`https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${API_KEY}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{"returnSecureToken":true}' }, 10000);
-            const j = await r.json().catch(() => ({}));
-            if (r.ok && j.idToken) idToken = j.idToken;
-        }
-
-        async function call(method, path, body) {
-            const send = () => http(`${BASE}${path}${path.includes('?') ? '&' : '?'}key=${API_KEY}`, {
-                method,
-                headers: { ...(body ? { 'Content-Type': 'application/json' } : {}), ...(idToken ? { Authorization: 'Bearer ' + idToken } : {}) },
-                body: body ? JSON.stringify(body) : undefined
-            });
-            let r = await send();
-            if ((r.status === 401 || r.status === 403) && Date.now() - lastAuthTry > 300000) {
-                try { await anonSignIn(); r = await send(); } catch (e) {}
-            }
-            if (!r.ok) {
-                const j = await r.json().catch(() => ({}));
-                throw new Error((j.error && j.error.message) || `HTTP ${r.status}`);
-            }
-            return r.json();
-        }
-
-        const enc = v => v === null || v === undefined ? { nullValue: null } : typeof v === 'boolean' ? { booleanValue: v } : typeof v === 'number' ? (Number.isInteger(v) ? { integerValue: String(v) } : { doubleValue: v }) : { stringValue: String(v) };
-        const dec = f => 'stringValue' in f ? f.stringValue : 'integerValue' in f ? Number(f.integerValue) : 'doubleValue' in f ? f.doubleValue : 'booleanValue' in f ? f.booleanValue : null;
-
+        const firebaseConfig = {
+            apiKey: "AIzaSyDuIuf9y0IIJaMxBpcoJV6C4mZ2tTaVh40",
+            authDomain: "clinic-0129.firebaseapp.com",
+            databaseURL: "https://clinic-0129-default-rtdb.firebaseio.com",
+            projectId: "clinic-0129",
+            storageBucket: "clinic-0129.firebasestorage.app",
+            messagingSenderId: "493743976812",
+            appId: "1:493743976812:web:4f2e4442941d64646b0349",
+            measurementId: "G-EB0DV5RQ39"
+        };
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+        // Analytics is optional; an unsupported browser must not stop record sync.
+        isSupported().then(supported => { if (supported) getAnalytics(app); }).catch(() => {});
+        const recordRef = id => {
+            const key = String(id ?? '');
+            if (!key || /[.#$\[\]\/]/.test(key)) throw new Error('معرف السجل غير صالح');
+            return ref(database, 'clinic_patients/' + key);
+        };
         window.firebaseClinic = {
             ready: true,
             async saveRecord(record) {
                 if (!record || !record.id) throw new Error('بيانات غير صحيحة');
-                const data = { ...record, updatedAt: Number(record.updatedAt) || Date.now() };
-                const fields = {}; for (const k in data) fields[k] = enc(data[k]);
-                await call('PATCH', `/${COLL}/${encodeURIComponent(String(record.id))}`, { fields });
+                const data = JSON.parse(JSON.stringify({ ...record, updatedAt: Number(record.updatedAt) || Date.now() }));
+                await set(recordRef(record.id), data);
                 return true;
             },
             async loadRecords() {
-                const out = []; let token = '';
-                do {
-                    const j = await call('GET', `/${COLL}?pageSize=300${token ? '&pageToken=' + encodeURIComponent(token) : ''}`);
-                    (j.documents || []).forEach(d => {
-                        const o = {}; for (const k in (d.fields || {})) o[k] = dec(d.fields[k]);
-                        o.id = Number(o.id) || Number(d.name.split('/').pop());
-                        out.push(o);
-                    });
-                    token = j.nextPageToken || '';
-                } while (token);
+                const snapshot = await get(ref(database, 'clinic_patients'));
+                const out = [];
+                snapshot.forEach(child => {
+                    const record = child.val();
+                    if (record && typeof record === 'object') {
+                        out.push({ ...record, id: record.id || Number(child.key) || child.key });
+                    }
+                });
                 return out;
             },
-            async deleteRecord(id) { await call('DELETE', `/${COLL}/${encodeURIComponent(String(id))}`); return true; }
+            async deleteRecord(id) { await remove(recordRef(id)); return true; }
         };
         window.dispatchEvent(new Event('fb-init'));
     </script>
