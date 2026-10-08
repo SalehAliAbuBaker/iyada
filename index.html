@@ -401,7 +401,7 @@
                 <button type="button" onclick="showClinicAbout()"><span aria-hidden="true">ℹ️</span> حول التطبيق</button>
             </section>
 
-            <p class="clinic-version text-center text-slate-500" style="font-size:11px;">سجل العيادة — الإصدار 2.1.0</p>
+            <p class="clinic-version text-center text-slate-500" style="font-size:11px;">سجل العيادة — الإصدار 2.1.1</p>
 
             <!-- بطاقة المستخدم الحالي -->
             <div class="p-2.5 bg-slate-100 rounded-xl text-xs space-y-1">
@@ -430,7 +430,7 @@
                         <h1 class="text-xl font-extrabold">سجل العيادة</h1>
                         <span id="headerClinicBranch" class="clinic-branch-name">المركز الرئيسي</span>
                         <p class="text-teal-200 text-xs">نظام التسهيل الطبي وإصدار التقارير الإحصائية</p>
-                        <p class="clinic-version text-teal-200" style="font-size:10px;line-height:1.5;">الإصدار 2.1.0</p>
+                        <p class="clinic-version text-teal-200" style="font-size:10px;line-height:1.5;">الإصدار 2.1.1</p>
                     </div>
                 </div>
             </div>
@@ -454,7 +454,7 @@
     <dialog id="clinicAboutDialog" class="clinic-about-dialog no-print" dir="rtl" aria-labelledby="clinicAboutTitle" aria-describedby="clinicAboutDescription">
         <img src="icon.png" alt="أيقونة سجل العيادة" width="76" height="76">
         <h2 id="clinicAboutTitle">سجل العيادة</h2>
-        <p class="clinic-version" style="font-size:11px;margin-bottom:10px;">الإصدار 2.1.0</p>
+        <p class="clinic-version" style="font-size:11px;margin-bottom:10px;">الإصدار 2.1.1</p>
         <p id="clinicAboutDescription">تطبيق لتسجيل الحالات الواردة إلى العيادة، ومتابعة بيانات المرضى والمناوبين، وتنظيم الفروع، وإصدار التقارير والإحصائيات وطباعتها وتصديرها.</p>
         <button type="button" onclick="document.getElementById('clinicAboutDialog').close()" autofocus>إغلاق</button>
     </dialog>
@@ -464,6 +464,7 @@
 
 
         <div id="noAccountAccess" class="hidden p-5 bg-white border rounded-xl mb-4">لا توجد أقسام أو فروع متاحة لحسابك. تواصل مع مدير النظام.</div>
+        <p id="offlineReadyNotice" class="text-xs text-slate-500 mb-2 no-print" role="status"></p>
         <div id="syncConflictPanel" class="hidden bg-amber-50 border border-amber-300 rounded-xl p-3 mb-3 text-sm no-print" aria-live="polite"></div>
         <div id="activeUserIdentity" class="hidden no-print bg-teal-50 border border-teal-200 rounded-xl px-4 py-3 mb-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm" aria-live="polite">
             <label class="flex items-center gap-2">العيادة <select id="userFacilityPicker" onchange="selectAccountBranch(this.value)" class="border border-teal-300 rounded-lg p-2 bg-white"></select></label>
@@ -954,6 +955,7 @@
         }
         async function handleLogin(e) {
             e.preventDefault();
+            if(savingLocalRecord)return;
             const email = document.getElementById('loginUsername').value.trim();
             const pass = document.getElementById('loginPassword').value;
             const button = document.getElementById('loginSubmit');
@@ -1066,13 +1068,15 @@
             categoryData = settings.categories || { male: DEFAULT_MALE_CATS, female: DEFAULT_FEMALE_CATS };
             populateStaffDropdowns(); updateCategories(); renderBranchesSettings(); renderStaffSettings(); renderCategorySettings(); renderUsersSettings(); renderUserBranchChoices();
             const allowed = permittedBranchIds();
-            if (!allowed.includes(activeBranchId)) await selectAccountBranch(allowed[0] || '');
+            const preferred=localStorage.getItem('clinic_branch_choice_'+currentUser.uid);
+            if (!allowed.includes(activeBranchId)) await selectAccountBranch(allowed.includes(preferred)?preferred:(allowed[0] || ''));
             else { document.getElementById('headerClinicBranch').textContent = branchDirectory[activeBranchId].name; localStorage.setItem(ACTIVE_BRANCH_KEY, branchDirectory[activeBranchId].name); applyPermissions(); }
         };
         async function selectAccountBranch(id) {
             if (id && !canUseBranch(id)) return;
             if (syncing || flushing) return showToast('انتظر اكتمال المزامنة قبل تغيير الفرع.', true);
             activeBranchId = id;
+            if(currentUser && id)localStorage.setItem('clinic_branch_choice_'+currentUser.uid,id);
             const scope = currentUser ? currentUser.uid + '_' + (id || 'none') : 'signedout';
             STORAGE_KEY = 'clinic_secure_records_' + scope; PENDING_KEY = 'clinic_secure_pending_' + scope; INIT_KEY = 'clinic_secure_initial_' + scope;
             records = [];
@@ -1410,6 +1414,7 @@
             const record=records.find(r=>String(r.id)===String(id)), existing=localState.operations.find(o=>String(o.id)===String(id));
             const old=previous || localState.records.find(r=>String(r.id)===String(id));
             const operation={id:String(id),operationId:crypto.randomUUID(),kind,baseVersion:existing?existing.baseVersion:(old?.revision || old?.updatedAt || null),createdAt:Date.now(),status:existing?.status==='conflict'?'conflict':'pending',replaces:existing?.operationId||null};
+            if(previous && previous.revision!==existing?.operationId)operation.baseVersion=previous.revision||null;
             if(existing?.status==='conflict'){operation.remote=existing.remote||null;operation.reason=existing.reason;}
             if(kind==='up') { operation.record={...record,revision:operation.operationId}; if(record) record.revision=operation.operationId; }
             localState.operations=localState.operations.filter(o=>String(o.id)!==String(id));localState.operations.push(operation);
@@ -1608,6 +1613,7 @@
         }
 
         // ==================== حفظ السجل الطبي ====================
+        let capturedEditVersion=null, savingLocalRecord=false;
         async function saveRecord(e) {
             e.preventDefault();
 
@@ -1621,8 +1627,9 @@
                 ? 'هل أنت متأكد من حفظ التعديلات على هذا السجل؟' 
                 : 'هل أنت متأكد من حفظ بيانات المريض في السجل الطبي؟';
             if (!confirm(confirmMsg)) return;
+            savingLocalRecord=true;document.getElementById('saveBtn').disabled=true;
 
-            const beforeRecords=structuredClone(records),beforeState=structuredClone(localState);
+            const beforeScope=currentScope(),beforeRecords=structuredClone(records),beforeState=structuredClone(localState);
             try {
                 const genderElement = document.querySelector('input[name="gender"]:checked');
                 const patientName = document.getElementById('patientName').value.trim();
@@ -1669,22 +1676,23 @@
                     const index = records.findIndex(r => Number(r.id) === recordId);
                     if (index === -1) return alert('السجل غير موجود');
                     records[index] = recordData;
-                    showToast('تم تحديث بيانات السجل بنجاح');
+
                 } else {
                     records.push(recordData);
-                    showToast('تم حفظ حالة المريض — رقم السجل: ' + serialNumber);
+
                 }
 
-                queueUpsert(recordId);
+                stageOperation('up',recordId,isEditing?{revision:capturedEditVersion?.version||null}:undefined);
                 await saveToStorage();
+                showToast(isEditing?'تم حفظ التعديل محليًا':'تم حفظ الحالة محليًا — رقم السجل: '+serialNumber);
                 resetFormFull();
                 refreshAll();
                 flushPending();
             } catch (error) {
-                records=beforeRecords;localState=beforeState;refreshAll();
+                if(inScope(beforeScope)){records=beforeRecords;localState=beforeState;refreshAll();}
                 console.error(error);
                 showToast('لم يُحفظ السجل: '+error.message+' — أعد المحاولة.', true);
-            }
+            }finally{savingLocalRecord=false;document.getElementById('saveBtn').disabled=!(hasPerm('add')||hasPerm('edit'));}
         }
 
         function clearPatientFieldsOnly() {
@@ -1702,7 +1710,7 @@
         }
 
         function resetFormFull() {
-            document.getElementById('editId').value = '';
+            document.getElementById('editId').value = ''; capturedEditVersion=null;
             document.getElementById('saveBtn').innerHTML = '<span>💾 حفظ بيانات المريض في السجل</span>';
             document.getElementById('cancelEditBtn').classList.add('hidden');
             clearPatientFieldsOnly();
@@ -1782,6 +1790,7 @@
 
             switchTab('formTab');
             document.getElementById('editId').value = rec.id;
+            capturedEditVersion={id:String(rec.id),version:rec.revision||rec.updatedAt||null};
             document.getElementById('serialNumber').value = rec.serial;
             document.getElementById('visitDate').value = rec.date;
             document.getElementById('shiftPeriod').value = rec.period;
@@ -2108,6 +2117,7 @@
             const printable = container.cloneNode(true);
             printable.querySelectorAll('.no-print,button,input,select').forEach(control=>control.remove());
             printable.querySelectorAll('.report-summary').forEach(summary => summary.remove());
+            if(type==='comprehensive'){const widths=[3,5,6,4,8,10,3,7,4,9,8,5,7,7,7,7];printable.querySelectorAll('thead th').forEach((th,i)=>{th.style.width=widths[i]+'%';});}
             const total = type === 'categories' ? getCategoryRangeRecords().length
                 : type === 'staff' ? getStaffRangeRecords().length : getFilteredComprehensiveList().length;
             return { title, period, orientation, total, content: printable.outerHTML };
@@ -2166,7 +2176,7 @@
                         .report-box { padding:0; }
                         .report-box div { max-height: none !important; overflow: visible !important; }
                         .no-print { display: none !important; }
-                        table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 9px; }
+                        table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 10px; }
                         th, td { border: 1px solid #94a3b8; padding: 2px 2px; line-height:1.3; white-space: normal !important; overflow-wrap: anywhere; vertical-align: top; text-align: right; }
                         th { background-color: #f1f5f9; font-weight: bold; }
                         .truncate, .whitespace-nowrap { white-space: normal !important; overflow: visible !important; text-overflow: clip !important; max-width: none !important; }
@@ -2491,7 +2501,11 @@
 <script>
         if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js').catch(() => {});
+                const notice=document.getElementById('offlineReadyNotice');
+                const check=()=>navigator.serviceWorker.controller?.postMessage({type:'clinic-offline-check'});
+                navigator.serviceWorker.addEventListener('message',event=>{if(event.data?.type==='clinic-offline-ready' && event.source===navigator.serviceWorker.controller)notice.textContent=event.data.ready?'التطبيق جاهز للعمل دون إنترنت بعد تحميل بيانات حسابك.':'لم يكتمل تجهيز التشغيل دون إنترنت؛ أبقِ الاتصال متاحًا.';});
+                navigator.serviceWorker.addEventListener('controllerchange',check);
+                navigator.serviceWorker.register('./sw.js').then(()=>navigator.serviceWorker.ready).then(check).catch(()=>{notice.textContent='تعذر تجهيز التشغيل دون إنترنت في هذا المتصفح.';});
             });
         }
     </script>

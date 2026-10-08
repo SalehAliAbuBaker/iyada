@@ -1,4 +1,4 @@
-const CACHE = 'clinic-shell-v2.1.0';
+const CACHE = 'clinic-shell-v2.1.1';
 const SHELL = ['./','./index.html','./offline-store.js','./icon.png','./icon-192.png','./clinic.webmanifest','./apple-touch-icon.png','./icon-32.png','./clinic.ico'];
 const LIBRARIES = ['https://cdn.tailwindcss.com/','https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js',...['app','auth','database','analytics'].map(name=>'https://www.gstatic.com/firebasejs/13.0.0/firebase-'+name+'.js')];
 self.addEventListener('install',event=>{
@@ -11,6 +11,13 @@ self.addEventListener('install',event=>{
 });
 self.addEventListener('activate',event=>{
   event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key.startsWith('clinic-shell-')&&key!==CACHE).map(key=>caches.delete(key)))).then(()=>self.clients.claim()));
+});
+self.addEventListener('message',event=>{
+  if(event.data?.type!=='clinic-offline-check')return;
+  event.waitUntil((async()=>{
+    const cache=await caches.open(CACHE),checks=await Promise.all([...SHELL,...LIBRARIES].map(url=>cache.match(new URL(url,self.registration.scope).href)));
+    event.source?.postMessage({type:'clinic-offline-ready',version:'2.1.1',ready:checks.every(Boolean)});
+  })());
 });
 self.addEventListener('fetch',event=>{
   if(event.request.method!=='GET')return;
