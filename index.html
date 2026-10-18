@@ -2402,12 +2402,24 @@
             clearDataSubscriptions(); if(profileUnsubscribe) profileUnsubscribe(); profileUnsubscribe=null;
             await window.cloudSessionChanged(null);
             if (!user) { authMessage(''); return; }
-            if(!navigator.onLine) await offlineSession(user);
+            if (!navigator.onLine) {
+                // Reopen using the previously verified account and encrypted local records.
+                // A network subscription here can fail and incorrectly hide the patient list.
+                await offlineSession(user);
+                return;
+            }
             profileUnsubscribe=onValue(ref(database,'clinic_users/'+user.uid),async snapshot=>{
                 if(epoch!==sessionEpoch) return;
                 clearDataSubscriptions();
                 if(!navigator.onLine){await offlineSession(user);return;}
-                const value=await (await serverRequest('clinic_users/'+user.uid)).json();
+                let value;
+                try { value=await (await serverRequest('clinic_users/'+user.uid)).json(); }
+                catch (error) {
+                    // A temporary network failure does not mean the cached session was revoked.
+                    if (epoch!==sessionEpoch) return;
+                    if (!await offlineSession(user)) failure(error);
+                    return;
+                }
                 if(!value) {
                     await window.cloudSessionChanged(null);
                     if(user.email?.toLowerCase()===INITIAL_ADMIN_EMAIL) window.cloudAuthNotice(user.emailVerified ? 'اكتب الاسم الرباعي لتفعيل حساب المدير الأول.' : 'تحقق من بريد المدير أولًا لتفعيل الحساب.', user.emailVerified ? 'setup' : 'verify');
@@ -2421,7 +2433,14 @@
                 if(value.role==='admin') subscriptions.push(onValue(ref(database,'clinic_users'),snapshot=>{
                     const users=[];snapshot.forEach(child=>{users.push({...child.val(),uid:child.key});return false;});window.cloudDirectoryChanged(users);
                 },error=>{document.getElementById('userDirectoryStatus').textContent='تعذر تحميل المستخدمين: '+firebaseErrorMessage(error);}));
-            }, async error=>{await window.cloudSessionChanged(null); failure(error);});
+            }, async error=>{
+                if (epoch!==sessionEpoch) return;
+                const code=String(error?.code||'').toLowerCase();
+                if (code.includes('permission_denied') || code.includes('permission-denied')) {
+                    await window.cloudSessionChanged(null);
+                    failure(error);
+                } else if (!await offlineSession(user)) failure(error);
+            });
         }
         window.firebaseClinic = {
             ready: true,
@@ -2494,6 +2513,9 @@
                 return count;
             }
         };
+        // Resume cloud subscriptions after reconnection; offline records stay local until
+        // the server has validated the account and branch permissions again.
+        window.addEventListener('online',()=>{if(auth.currentUser)listenToProfile(auth.currentUser);});
         onAuthStateChanged(auth,user=>listenToProfile(user));
         window.dispatchEvent(new Event('fb-init'));
 
