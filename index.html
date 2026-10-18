@@ -2343,8 +2343,8 @@
             if (!key || /[.#$\[\]\/]/.test(key) || !canUseBranch(branch)) throw Object.assign(new Error('فرع أو سجل غير مسموح'),{code:'PERMISSION_DENIED'});
             return ref(database, 'clinic_records/'+branch+'/'+key);
         }
-        const OFFLINE_GRACE_MS = 24*60*60*1000;
-        let offlineExpiryTimer;
+        // Offline access has no time limit for an already authenticated,
+        // previously server-verified account. Server authority is rechecked online.
         async function serverRequest(path,options={}) {
             const user=auth.currentUser;if(!user)throw Object.assign(new Error('سجل الدخول أولًا.'),{code:'PERMISSION_DENIED'});
             const token=await user.getIdToken(),controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),12000);
@@ -2360,18 +2360,15 @@
         }
         async function offlineSession(user) {
             const saved=await clinicStore.load(user.uid,'session');
-            if(!saved?.profile?.active || !saved.settings || Date.now()-saved.verifiedAt>OFFLINE_GRACE_MS) {
+            if(!saved?.profile?.active || !saved.settings || !Number.isFinite(saved.verifiedAt) || saved.verifiedAt<=0) {
                 await window.cloudSessionChanged(null);window.cloudAuthNotice('يلزم الاتصال بالإنترنت للتحقق من الحساب. البيانات غير المتزامنة محفوظة.');return false;
             }
             await window.cloudSessionChanged(saved.profile);await window.cloudSettingsChanged(saved.settings);
-            clearTimeout(offlineExpiryTimer);
-            offlineExpiryTimer=setTimeout(()=>{if(!navigator.onLine){window.cloudSessionChanged(null);window.cloudAuthNotice('انتهت مهلة العمل دون إنترنت؛ اتصل للتحقق من صلاحياتك. العمليات محفوظة.');}},Math.max(1,saved.verifiedAt+OFFLINE_GRACE_MS-Date.now()));
             syncState='offline';updateSyncStatus();return true;
         }
         async function validateAuthority() {
             const user=auth.currentUser;if(!user || !navigator.onLine)throw new Error('يلزم اتصال بالخادم قبل رفع العمليات.');
             const profile=await (await serverRequest('clinic_users/'+user.uid)).json();
-            clearTimeout(offlineExpiryTimer);
             if(!profile?.active){await clinicStore.save(user.uid,'session',null);await window.cloudSessionChanged(null);throw Object.assign(new Error('الحساب معطل أو غير مفعّل.'),{code:'PERMISSION_DENIED'});}
             const settings=await (await serverRequest('clinic_settings')).json();
             const previous=currentUser;currentUser={...profile,uid:user.uid,email:user.email,username:user.email};
